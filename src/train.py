@@ -71,7 +71,7 @@ def main():
         help='selection weight')
     parser.add_argument('--seed', type=int, default=1,
         help='random seed')
-    parser.add_argument('--cuda', action='store_true', default=True,
+    parser.add_argument('--cuda', action='store_true', default=False,
         help='use CUDA')
     parser.add_argument('--model_file', type=str,  default='',
         help='path to save the final model')

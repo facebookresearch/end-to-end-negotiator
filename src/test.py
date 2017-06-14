@@ -29,7 +29,7 @@ def main():
         help='use hierarchical model')
     parser.add_argument('--bsz', type=int, default=16,
         help='batch size')
-    parser.add_argument('--cuda', action='store_true', default=True,
+    parser.add_argument('--cuda', action='store_true', default=False,
         help='use CUDA')
     args = parser.parse_args()
 
