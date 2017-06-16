@@ -23,7 +23,7 @@ If you want to use this code in your research, please cite:
 --->
 
 # Dataset
-We release our dataset together with the code, you can find it under `data/negotiate`. This dataset consists of 5808 dialogues, based on 2236 unique scenarious. Take a look at §2.3 of the paper to learn about data collection.
+We release our dataset together with the code, you can find it under `data/negotiate`. This dataset consists of 5808 dialogues, based on 2236 unique scenarios. Take a look at §2.3 of the paper to learn about data collection.
 
 Each dialogue is converted into two training examples in the dataset, showing the complete conversation from the prespective of each agent. The perspectives differ on their input goals, output choice, and in special tokens marking whether a statement was read or written. See §3.1 for the details on data representation.
 ```
