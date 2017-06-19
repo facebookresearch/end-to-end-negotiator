@@ -14,8 +14,8 @@ If you want to use this code in your research, please cite:
   archivePrefix   = "arXiv",
   eprinttype      = {arxiv},
   eprint          = {1706.05125},
-  primaryClass    = "cs.CL",
-  keywords        = {Computer Science - Computation and Language},
+  primaryClass    = "cs.AI",
+  keywords        = {Computer Science - Artificial Intelligence},
   year            = 2017,
   month           = June,
 }
