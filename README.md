@@ -1,9 +1,9 @@
 # Introduction
-This is a [PyTorch](http://pytorch.org/) implementation of research paper [Deal or No Deal? End-to-End Learning for Negotiation Dialogues](http://s3.amazonaws.com/end-to-end-negotiator/end-to-end-negotiator.pdf) developed by [Facebook AI Research](http://research.fb.com/category/facebook-ai-research-fair).
+This is a [PyTorch](http://pytorch.org/) implementation of research paper [Deal or No Deal? End-to-End Learning for Negotiation Dialogues](https://arxiv.org/abs/1706.05125) developed by [Facebook AI Research](http://research.fb.com/category/facebook-ai-research-fair).
 
 The code trains neural networks to hold negotiations in natural language, and allows reinforcement learning self play and rollout-based planning.
 
-<!---
+
 # Citation
 If you want to use this code in your research, please cite:
 ```
@@ -13,14 +13,14 @@ If you want to use this code in your research, please cite:
   journal         = {ArXiv e-prints},
   archivePrefix   = "arXiv",
   eprinttype      = {arxiv},
-  eprint          = {},
+  eprint          = {1706.05125},
   primaryClass    = "cs.CL",
   keywords        = {Computer Science - Computation and Language},
   year            = 2017,
   month           = June,
 }
 ```
---->
+
 
 # Dataset
 We release our dataset together with the code, you can find it under `data/negotiate`. This dataset consists of 5808 dialogues, based on 2236 unique scenarios. Take a look at §2.3 of the paper to learn about data collection.
