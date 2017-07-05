@@ -3,6 +3,9 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+"""
+Several metrics that are being evaluated during selfplay.
+"""
 
 from collections import OrderedDict
 import pdb
@@ -12,6 +15,7 @@ import data
 
 
 class TimeMetric(object):
+    """Time based metric."""
     def __init__(self):
         self.t = 0
         self.n = 0
@@ -32,6 +36,7 @@ class TimeMetric(object):
 
 
 class NumericMetric(object):
+    """Base class for a numeric metric."""
     def __init__(self):
         self.k = 0
         self.n = 0
@@ -49,16 +54,19 @@ class NumericMetric(object):
 
 
 class PercentageMetric(NumericMetric):
+    """Percentage."""
     def show(self):
         return '%2.2f%%' % (100. * self.value())
 
 
 class AverageMetric(NumericMetric):
+    """Average."""
     def show(self):
         return '%.2f' % (1. * self.value())
 
 
 class TextMetric(object):
+    """Text based metric."""
     def __init__(self, text):
         self.text = text
         self.k = 0
@@ -76,6 +84,7 @@ class TextMetric(object):
 
 
 class NGramMetric(TextMetric):
+    """Metric that evaluates n gramms."""
     def __init__(self, text, ngram=-1):
         super(NGramMetric, self).__init__(text)
         self.ngram = ngram
@@ -90,6 +99,7 @@ class NGramMetric(TextMetric):
 
 
 class UniquenessMetric(object):
+    """Metric that evaluates the number of unique sentences."""
     def __init__(self):
         self.seen = set()
 
@@ -107,6 +117,7 @@ class UniquenessMetric(object):
 
 
 class SimilarityMetric(object):
+    """Metric that evaluate similarity of the produced sentences."""
     def __init__(self):
         self.reset()
         self.k = 0
@@ -133,6 +144,7 @@ class SimilarityMetric(object):
 
 
 class MetricsContainer(object):
+    """A container that stores and updates several metrics."""
     def __init__(self):
         self.metrics = OrderedDict()
 

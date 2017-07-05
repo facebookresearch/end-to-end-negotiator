@@ -3,6 +3,9 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+"""
+An util to negotiate with AI.
+"""
 
 import argparse
 import itertools
@@ -15,12 +18,14 @@ from dialog import Dialog, DialogLogger
 
 
 class Chat(object):
+    """A helper class that runs dialogues."""
     def __init__(self, dialog, ctx_gen, logger=None):
         self.dialog = dialog
         self.ctx_gen = ctx_gen
         self.logger = logger if logger else DialogLogger()
 
     def run(self):
+        """Runs endless number of dialogues."""
         self.logger.dump('Welcome to our Chatroulette!')
         for dialog_id in itertools.count():
             self.logger.dump('=' * 80)
@@ -72,6 +77,7 @@ def main():
 
     dialog = Dialog(agents, args)
     logger = DialogLogger(verbose=True)
+    # either take manually produced contextes, or relay on the ones from the dataset
     if args.context_file == '':
         ctx_gen = ManualContextGenerator(args.num_types, args.num_objects, args.max_score)
     else:

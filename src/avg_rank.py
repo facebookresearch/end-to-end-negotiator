@@ -3,6 +3,10 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+"""
+Script to compute average rank for both supervised models
+and models with planning.
+"""
 
 import argparse
 import sys
@@ -12,10 +16,7 @@ import itertools
 import re
 import pdb
 
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
+import numpy as np import torch import torch.nn as nn import torch.optim as optim
 from torch.autograd import Variable
 
 import data
@@ -29,6 +30,7 @@ TAGS = ['YOU:', 'THEM:']
 
 
 def read_dataset(file_name):
+    """A helper function that reads the dataset and finds out all the unique sentences."""
     lines = data.read_lines(file_name)
     dataset = []
     all_sents = set()
@@ -76,14 +78,14 @@ def rollout(sent, ai, domain, temperature):
         combined_words = ai.words + [ai.model.word2var('YOU:'), Variable(enc)]
 
         if not is_selection:
-            # Complete the conversation with rollout_length samples
+            # complete the conversation with rollout_length samples
             _, rollout, _, rollout_lang_hs = ai.model.write(
                 lang_h, ai.ctx_h, 100, temperature,
                 stop_tokens=['<selection>'], resume=True)
             combined_lang_hs += [rollout_lang_hs]
             combined_words += [rollout]
 
-        # Choose items
+        # choose items
         rollout_score = None
 
         combined_lang_hs = torch.cat(combined_lang_hs)
@@ -97,20 +99,28 @@ def rollout(sent, ai, domain, temperature):
 
 
 def likelihood(sent, ai, domain, temperature):
+    """Computes likelihood of a given sentence according the giving model."""
     enc = ai._encode(sent, ai.model.word_dict)
     score, _, _= ai.model.score_sent(enc, ai.lang_h, ai.ctx_h, temperature)
     return score
 
 
 def compute_rank(target, sents, ai, domain, temperature, score_func):
+    """Computes rank of the target sentence.
+
+    Basically find a position in the sorted list of all seen sentences.
+    """
     scores = []
+    # score each unique sentence
     for sent in sents:
         score = score_func(sent, ai, domain, temperature)
         scores.append((score, sent))
     scores = sorted(scores, key=lambda x: -x[0])
 
+    # score the target sentence
     target_score = score_func(target, ai, domain, temperature)
 
+    # find the position of the target sentence in the sorted list of all the senteces
     for rank, (score, _) in enumerate(scores):
         if target_score > score:
             return rank + 1
@@ -148,13 +158,16 @@ def main():
     ranks, n, k = 0, 0, 0
     for ctx, dialog in dataset:
         start_time = time.time()
+        # start new conversation
         ai.feed_context(ctx)
         for sent, you in dialog:
             if you:
+                # if it is your turn to say, take the target word and compute its rank
                 rank = compute_rank(sent, sents, ai, domain, args.temperature, score_func)
-                # Compute lang_h for the groundtruth sentence
+                # compute lang_h for the groundtruth sentence
                 enc = ai._encode(sent, ai.model.word_dict)
                 _, ai.lang_h, lang_hs = ai.model.score_sent(enc, ai.lang_h, ai.ctx_h, args.temperature)
+                # save hidden states and the utterance
                 ai.lang_hs.append(lang_hs)
                 ai.words.append(ai.model.word2var('YOU:'))
                 ai.words.append(Variable(enc))

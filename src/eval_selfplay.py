@@ -3,6 +3,10 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+"""
+Script to evaluate selfplay.
+It computes agreement rate, average score and Pareto optimality.
+"""
 
 import argparse
 import sys
@@ -20,7 +24,8 @@ from domain import get_domain
 
 
 def parse_line(line, domain):
-    tokens = line.split(' ')[1:] # Skip debug:
+    # skip the 'debug:' token
+    tokens = line.split(' ')[1:]
     context = tokens[:2 * domain.input_length()]
     choice_str = tokens[-domain.selection_length():]
 
@@ -38,13 +43,16 @@ def parse_line(line, domain):
 
 
 def parse_log(file_name, domain):
+    """Parse the log file produced by selfplay.
+    See the format of that log file to get more details.
+    """
     dataset, current = [], []
     for line in data.read_lines(file_name):
         if line.startswith('debug:'):
             cnts, vals, picks = parse_line(line, domain)
             current.append((cnts, vals, picks))
         if len(current) == 2:
-            # Validate that the counts match
+            # validate that the counts match
             cnts1, vals1, picks1 = current[0]
             cnts2, vals2, picks2 = current[1]
             assert cnts1 == cnts2
@@ -54,11 +62,15 @@ def parse_log(file_name, domain):
 
 
 def compute_score(vals, picks):
+    """Compute the score of the selection."""
     assert len(vals) == len(picks)
     return np.sum([v * p for v, p in zip(vals, picks)])
 
 
 def gen_choices(cnts, idx=0, choice=[]):
+    """Generate all the valid choices.
+    It generates both yours and your opponent choices.
+    """
     if idx >= len(cnts):
         return [(choice[:], [n - c for n, c in zip(cnts, choice)]),]
     choices = []

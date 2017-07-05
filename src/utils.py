@@ -3,6 +3,9 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+"""
+Various helpers.
+"""
 
 import random
 import copy
@@ -13,23 +16,27 @@ import numpy as np
 
 
 def backward_hook(grad):
+    """Hook for backward pass."""
     print(grad)
     pdb.set_trace()
     return grad
 
 
 def save_model(model, file_name):
+    """Serializes model to a file."""
     if file_name != '':
         with open(file_name, 'wb') as f:
             torch.save(model, f)
 
 
 def load_model(file_name):
+    """Reads model from a file."""
     with open(file_name, 'rb') as f:
         return torch.load(f)
 
 
 def set_seed(seed):
+    """Sets random seed everywhere."""
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed(seed)
@@ -38,6 +45,7 @@ def set_seed(seed):
 
 
 def use_cuda(enabled, device_id=0):
+    """Verifies if CUDA is available and sets default device to be device_id."""
     if not enabled:
         return None
     assert torch.cuda.is_available(), 'CUDA is not available'
@@ -47,11 +55,13 @@ def use_cuda(enabled, device_id=0):
 
 
 def prob_random():
+    """Prints out the states of various RNGs."""
     print('random state: python %.3f torch %.3f numpy %.3f' % (
         random.random(), torch.rand(1)[0], np.random.rand()))
 
 
 class ContextGenerator(object):
+    """Dialogue context generator. Generates contexes from the file."""
     def __init__(self, context_file):
         self.ctxs = []
         with open(context_file, 'r') as f:
@@ -74,6 +84,7 @@ class ContextGenerator(object):
 
 
 class ManualContextGenerator(object):
+    """Dialogue context generator. Takes contexes from stdin."""
     def __init__(self, num_types=3, num_objects=10, max_score=10):
             self.num_types = num_types
             self.num_objects = num_objects

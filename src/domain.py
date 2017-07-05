@@ -3,44 +3,78 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+"""
+A collection of the implemented negotiation domain.
+"""
 
 import re
 
 
 def get_domain(name):
+    """Creates domain by name."""
     if name == 'object_division':
         return ObjectDivisionDomain()
     raise()
 
 
 class Domain(object):
-    """ Domain interface. """
+    """Domain interface."""
     def selection_length(self):
+        """The length of the selection output."""
         pass
 
     def input_length(self):
+        """The length of the context/input."""
         pass
 
-    def generate_choices(self, input):
+    def generate_choices(self, ctx):
+        """Generates all the possible valid choices based on the given context.
+
+        ctx: a list of strings that represents a context for the negotiation.
+        """
         pass
 
     def parse_context(self, ctx):
+        """Parses a given context.
+
+        ctx: a list of strings that represents a context for the negotiation.
+        """
         pass
 
     def score(self, context, choice):
+        """Scores the dialogue.
+
+        context: the input of the dialogue.
+        choice: the generated choice by an agent.
+        """
         pass
 
     def parse_choice(self, choice):
+        """Parses the generated choice.
+
+        choice: a list of strings like 'itemX=Y'
+        """
         pass
 
-    def parse_human_choice(self, input, output):
+    def parse_human_choice(self, inpt, choice):
+        """Parses human choices. It has extra validation that parse_choice.
+
+        inpt: the context of the dialogue.
+        choice: the generated choice by a human
+        """
         pass
 
     def score_choices(self, choices, ctxs):
+        """Scores choices.
+
+        choices: agents choices.
+        ctxs: agents contexes.
+        """
         pass
 
 
 class ObjectDivisionDomain(Domain):
+    """Instance of the object division domain."""
     def __init__(self):
         self.item_pattern = re.compile('^item([0-9])=([0-9\-])+$')
 
@@ -50,8 +84,8 @@ class ObjectDivisionDomain(Domain):
     def input_length(self):
         return 3
 
-    def generate_choices(self, input):
-        cnts, _ = self.parse_context(input)
+    def generate_choices(self, inpt):
+        cnts, _ = self.parse_context(inpt)
 
         def gen(cnts, idx=0, choice=[]):
             if idx >= len(cnts):
@@ -94,8 +128,8 @@ class ObjectDivisionDomain(Domain):
         # Returns item idx and it's count
         return (int(match.groups()[0]), int(match.groups()[1]))
 
-    def parse_human_choice(self, input, output):
-        cnts = self.parse_context(input)[0]
+    def parse_human_choice(self, inpt, output):
+        cnts = self.parse_context(inpt)[0]
         choice = [int(x) for x in output.strip().split()]
 
         if len(choice) != len(cnts):

@@ -3,6 +3,9 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+"""
+A visualization library. Relies on visdom.
+"""
 
 import pdb
 
@@ -11,6 +14,7 @@ import numpy as np
 
 
 class Plot(object):
+    """A class for plotting and updating the plot in real time."""
     def __init__(self, metrics, title, ylabel, xlabel='t', running_n=100):
         self.vis = visdom.Visdom()
         self.metrics = metrics
@@ -47,6 +51,7 @@ class Plot(object):
 
 
 class ModulePlot(object):
+    """A helper class that plots norms of weights and gradients for a given module."""
     def __init__(self, module, plot_weight=False, plot_grad=False, running_n=100):
         self.module = module
         self.plot_weight = plot_weight

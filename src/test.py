@@ -3,6 +3,9 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+"""
+Performs evaluation of the model on the test dataset.
+"""
 
 import argparse
 
@@ -49,8 +52,11 @@ def main():
 
     N = len(corpus.word_dict)
     for batch in testset:
+        # run forward on the batch, produces output, hidden, target,
+        # selection output and selection target
         out, hid, tgt, sel_out, sel_tgt = Engine.forward(model, batch, volatile=False)
 
+        # compute LM and selection losses
         test_loss += tgt.size(0) * crit(out.view(-1, N), tgt).data[0]
         test_select_loss += sel_crit(sel_out, sel_tgt).data[0]
 

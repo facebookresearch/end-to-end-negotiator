@@ -3,6 +3,9 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+"""
+Dialogue runner class. Implementes communication between two Agents.
+"""
 
 import sys
 import pdb
@@ -16,6 +19,7 @@ import domain
 
 
 class DialogLogger(object):
+    """Logger for a dialogue."""
     CODE2ITEM = [
         ('item0', 'book'),
         ('item1', 'hat'),
@@ -75,6 +79,7 @@ class DialogLogger(object):
 
 
 class DialogSelfTrainLogger(DialogLogger):
+    """This logger is used to produce new training data from selfplaying."""
     def __init__(self, verbose=False, log_file=None):
         super(DialogSelfTrainLogger, self).__init__(verbose, log_file)
         self.name2example = {}
@@ -109,8 +114,9 @@ class DialogSelfTrainLogger(DialogLogger):
 
 
 class Dialog(object):
+    """Dialogue runner."""
     def __init__(self, agents, args):
-        # For now we only suppport dialog of 2 agents
+        # for now we only suppport dialog of 2 agents
         assert len(agents) == 2
         self.agents = agents
         self.args = args
@@ -119,6 +125,7 @@ class Dialog(object):
         self._register_metrics()
 
     def _register_metrics(self):
+        """Registers valuable metrics."""
         self.metrics.register_average('dialog_len')
         self.metrics.register_average('sent_len')
         self.metrics.register_percentage('agree')
@@ -140,32 +147,39 @@ class Dialog(object):
         return ' '.join(['%s=%s' % (k, v) for k, v in self.metrics.dict().items()])
 
     def run(self, ctxs, logger):
+        """Runs one instance of the dialogue."""
         assert len(self.agents) == len(ctxs)
+        # initialize agents by feeding in the contexes
         for agent, ctx in zip(self.agents, ctxs):
             agent.feed_context(ctx)
             logger.dump_ctx(agent.name, ctx)
         logger.dump('-' * 80)
 
-        # Choose who goes first by random
+        # choose who goes first by random
         if np.random.rand() < 0.5:
             writer, reader = self.agents
         else:
             reader, writer = self.agents
 
         conv = []
+        # reset metrics
         self.metrics.reset()
 
         while True:
+            # produce an utterance
             out = writer.write()
 
             self.metrics.record('sent_len', len(out))
             self.metrics.record('full_match', out)
             self.metrics.record('%s_unique' % writer.name, out)
 
+            # append the utterance to the conversation
             conv.append(out)
+            # make the other agent to read it
             reader.read(out)
             if not writer.human:
                 logger.dump_sent(writer.name, out)
+            # check if the end of the conversation was generated
             if self._is_selection(out):
                 self.metrics.record('%s_sel' % writer.name, 1)
                 self.metrics.record('%s_sel' % reader.name, 0)
@@ -174,14 +188,17 @@ class Dialog(object):
 
 
         choices = []
+        # generate choices for each of the agents
         for agent in self.agents:
             choice = agent.choose()
             choices.append(choice)
             logger.dump_choice(agent.name, choice[: self.domain.selection_length() // 2])
 
+        # evaluate the choices, produce agreement and a reward
         agree, rewards = self.domain.score_choices(choices, ctxs)
         logger.dump('-' * 80)
         logger.dump_agreement(agree)
+        # perform update, in case if any of the agents is learnable
         for agent, reward in zip(self.agents, rewards):
             logger.dump_reward(agent.name, agree, reward)
             agent.update(agree, reward)

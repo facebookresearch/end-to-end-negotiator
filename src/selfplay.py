@@ -3,6 +3,9 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+"""
+Selfplaying util.
+"""
 
 import argparse
 import pdb
@@ -23,6 +26,7 @@ from models.dialog_model import DialogModel
 
 
 class SelfPlay(object):
+    """Selfplay runner."""
     def __init__(self, dialog, ctx_gen, args, logger=None):
         self.dialog = dialog
         self.ctx_gen = ctx_gen
@@ -31,6 +35,7 @@ class SelfPlay(object):
 
     def run(self):
         n = 0
+        # goes through the list of contexes and kicks off a dialogue
         for ctxs in self.ctx_gen.iter():
             n += 1
             self.logger.dump('=' * 80)

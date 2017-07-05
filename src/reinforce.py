@@ -3,6 +3,9 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+"""
+Reinforcement learning via Policy Gradient (REINFORCE).
+"""
 
 import argparse
 import pdb
@@ -25,6 +28,7 @@ from dialog import Dialog, DialogLogger
 
 
 class Reinforce(object):
+    """Facilitates a dialogue between two agents and constantly updates them."""
     def __init__(self, dialog, ctx_gen, args, engine, corpus, logger=None):
         self.dialog = dialog
         self.ctx_gen = ctx_gen
@@ -34,6 +38,7 @@ class Reinforce(object):
         self.logger = logger if logger else DialogLogger()
 
     def run(self):
+        """Entry point of the training."""
         validset, validset_stats = self.corpus.valid_dataset(self.args.bsz,
             device_id=self.engine.device_id)
         trainset, trainset_stats = self.corpus.train_dataset(self.args.bsz,
@@ -43,10 +48,12 @@ class Reinforce(object):
         n = 0
         for ctxs in self.ctx_gen.iter(self.args.nepoch):
             n += 1
+            # supervised update
             if self.args.sv_train_freq > 0 and n % self.args.sv_train_freq == 0:
                 self.engine.train_single(N, trainset)
 
             self.logger.dump('=' * 80)
+            # run dialogue, it is responsible for reinforcing the agents
             self.dialog.run(ctxs, self.logger)
             self.logger.dump('=' * 80)
             self.logger.dump('')
@@ -130,10 +137,12 @@ def main():
     utils.set_seed(args.seed)
 
     alice_model = utils.load_model(args.alice_model_file)
-    # We don't want to use Dropout during RL
+    # we don't want to use Dropout during RL
     alice_model.eval()
+    # Alice is a RL based agent, meaning that she will be learning while selfplaying
     alice = RlAgent(alice_model, args, name='Alice')
 
+    # we keep Bob frozen, i.e. we don't update his parameters
     bob_ty = LstmRolloutAgent if args.smart_bob else LstmAgent
     bob_model = utils.load_model(args.bob_model_file)
     bob_model.eval()
