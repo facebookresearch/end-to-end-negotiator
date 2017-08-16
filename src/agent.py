@@ -154,7 +154,7 @@ class LstmAgent(Agent):
             idxs = self.model.to_device(idxs)
             choices_logits.append(torch.gather(logits[i], 0, idxs).unsqueeze(1))
 
-        choice_logit = torch.sum(torch.cat(choices_logits, 1), 1).squeeze(1)
+        choice_logit = torch.sum(torch.cat(choices_logits, 1), 1, keepdim=False)
         # subtract the max to softmax more stable
         choice_logit = choice_logit.sub(choice_logit.max().data[0])
         prob = F.softmax(choice_logit)
@@ -164,7 +164,7 @@ class LstmAgent(Agent):
             logprob = F.log_softmax(choice_logit).gather(0, idx)
         else:
             # take the most probably choice
-            _, idx = prob.max(0)
+            _, idx = prob.max(0, keepdim=True)
             logprob = None
 
         p_agree = prob[idx.data[0]]

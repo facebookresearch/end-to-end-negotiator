@@ -172,7 +172,7 @@ class DialogModel(modules.CudaModule):
         h = h.transpose(0, 1).contiguous()
         logit = self.attn(h.view(-1, 2 * self.args.nhid_attn)).view(h.size(0), h.size(1))
         prob = F.softmax(logit).unsqueeze(2).expand_as(h)
-        attn = torch.sum(torch.mul(h, prob), 1).transpose(0, 1).contiguous()
+        attn = torch.sum(torch.mul(h, prob), 1, keepdim=True).transpose(0, 1).contiguous()
 
         # concatenate attention and context hidden and pass it to the selection encoder
         h = torch.cat([attn, ctx_h], 2).squeeze(0)
@@ -201,7 +201,7 @@ class DialogModel(modules.CudaModule):
         # perform attention
         logit = self.attn(h).squeeze(1)
         prob = F.softmax(logit).unsqueeze(1).expand_as(h)
-        attn = torch.sum(torch.mul(h, prob), 0)
+        attn = torch.sum(torch.mul(h, prob), 0, keepdim=True)
 
         # concatenate attention and context hidden and pass it to the selection encoder
         ctx_h = ctx_h.squeeze(1)
@@ -236,7 +236,7 @@ class DialogModel(modules.CudaModule):
             # tie weights with encoder
             scores = F.linear(out, self.word_encoder.weight).div(temperature)
             # subtract max to make softmax more stable
-            scores.sub_(scores.max(1)[0].expand(scores.size(0), scores.size(1)))
+            scores.sub_(scores.max(1, keepdim=True)[0].expand(scores.size(0), scores.size(1)))
             out = torch.multinomial(scores.exp(), 1).squeeze(1)
             # save outputs and hidden states
             outs.append(out.unsqueeze(0))
