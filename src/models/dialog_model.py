@@ -279,7 +279,7 @@ class DialogModel(modules.CudaModule):
 
         # generate words until max_words have been generated or <selection>
         for _ in range(max_words):
-            if inpt:
+            if inpt is not None:
                 # add the context to the word embedding
                 inpt_emb = torch.cat([self.word_encoder(inpt), ctx_h], 1)
                 # update RNN state with last word
