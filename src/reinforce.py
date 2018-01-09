@@ -115,7 +115,7 @@ def main():
         help='learning rate')
     parser.add_argument('--clip', type=float, default=0.1,
         help='gradient clip')
-    parser.add_argument('--rl_lr', type=float, default=0.1,
+    parser.add_argument('--rl_lr', type=float, default=0.2,
         help='RL learning rate')
     parser.add_argument('--rl_clip', type=float, default=0.1,
         help='RL gradient clip')
@@ -125,7 +125,7 @@ def main():
         help='batch size')
     parser.add_argument('--sv_train_freq', type=int, default=-1,
         help='supervision train frequency')
-    parser.add_argument('--nepoch', type=int, default=1,
+    parser.add_argument('--nepoch', type=int, default=4,
         help='number of epochs')
     parser.add_argument('--visual', action='store_true', default=False,
         help='plot graphs')
@@ -134,7 +134,6 @@ def main():
     args = parser.parse_args()
 
     device_id = utils.use_cuda(args.cuda)
-    utils.set_seed(args.seed)
 
     alice_model = utils.load_model(args.alice_model_file)
     # we don't want to use Dropout during RL

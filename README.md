@@ -96,11 +96,11 @@ python reinforce.py \
   --gamma 0.95 \
   --lr 0.5 \
   --momentum 0.1 \
-  --nepoch 1 \
+  --nepoch 4 \
   --nesterov \
   --ref_text data/negotiate/train.txt \
   --rl_clip 1 \
-  --rl_lr 0.1 \
+  --rl_lr 0.2 \
   --score_threshold 6 \
   --sv_train_freq 4 \
   --temperature 0.5 \
