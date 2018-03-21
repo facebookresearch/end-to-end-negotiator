@@ -205,7 +205,7 @@ class LstmRolloutAgent(LstmAgent):
             # try nrollout rollouts to estimate the reward
             for _ in range(self.nrollout):
                 combined_lang_hs = self.lang_hs + [move_lang_hs]
-                combined_words = self.words + [self.model.word2var('YOU:'), move]
+                combined_words = self.words + [self.model.word2var('YOU:').unsqueeze(1), move]
 
                 if not is_selection:
                     # complete the conversation with rollout_length samples
