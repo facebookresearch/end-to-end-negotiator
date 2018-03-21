@@ -117,7 +117,7 @@ class LstmAgent(Agent):
         # append new hidded states to the current list of the hidden states
         self.lang_hs.append(lang_hs.squeeze(1))
         # first add the special 'THEM:' token
-        self.words.append(self.model.word2var('THEM:'))
+        self.words.append(self.model.word2var('THEM:').unsqueeze(1))
         # then read the utterance
         self.words.append(Variable(inpt))
         assert (torch.cat(self.words).size()[0] == torch.cat(self.lang_hs).size()[0])
@@ -129,7 +129,7 @@ class LstmAgent(Agent):
         # append new hidded states to the current list of the hidden states
         self.lang_hs.append(lang_hs)
         # first add the special 'YOU:' token
-        self.words.append(self.model.word2var('YOU:'))
+        self.words.append(self.model.word2var('YOU:').unsqueeze(1))
         # then append the utterance
         self.words.append(outs)
         assert (torch.cat(self.words).size()[0] == torch.cat(self.lang_hs).size()[0])
@@ -233,7 +233,7 @@ class LstmRolloutAgent(LstmAgent):
         outs, lang_h, lang_hs = res
         self.lang_h = lang_h
         self.lang_hs.append(lang_hs)
-        self.words.append(self.model.word2var('YOU:'))
+        self.words.append(self.model.word2var('YOU:').unsqueeze(1))
         self.words.append(outs)
         return self._decode(outs, self.model.word_dict)
 
@@ -293,7 +293,7 @@ class BatchedRolloutAgent(LstmRolloutAgent):
                 lang_h, sent_lang_hs, move = states[sent]
                 self.lang_h = lang_h
                 self.lang_hs.append(sent_lang_hs)
-                self.words.append(self.model.word2var('YOU:'))
+                self.words.append(self.model.word2var('YOU:').unsqueeze(1))
                 self.words.append(self.model.to_device(Variable(move)))
                 assert (torch.cat(self.words).size()[0] == torch.cat(self.lang_hs).size()[0])
 
@@ -331,7 +331,7 @@ class RlAgent(LstmAgent):
         self.logprobs.extend(logprobs)
         self.lang_hs.append(lang_hs)
         # first add the special 'YOU:' token
-        self.words.append(self.model.word2var('YOU:'))
+        self.words.append(self.model.word2var('YOU:').unsqueeze(1))
         # then append the utterance
         self.words.append(outs)
         assert (torch.cat(self.words).size()[0] == torch.cat(self.lang_hs).size()[0])

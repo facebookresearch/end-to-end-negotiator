@@ -133,7 +133,7 @@ class DialogModel(modules.CudaModule):
         """Reads a given utterance."""
         # inpt contains the pronounced utterance
         # add a "THEM:" token to the start of the message
-        prefix = Variable(torch.LongTensor(1))
+        prefix = Variable(torch.LongTensor(1).unsqueeze(1))
         prefix.data.fill_(self.word_dict.get_idx(prefix_token))
         inpt = torch.cat([self.to_device(prefix), inpt])
 
