@@ -11,7 +11,7 @@ import sys
 import re
 import pdb
 import time
-
+import logging
 import numpy as np
 import torch
 import torch.nn as nn
@@ -24,6 +24,7 @@ from data import STOP_TOKENS
 from domain import get_domain
 from models import modules
 
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 class DialogModel(modules.CudaModule):
     def __init__(self, word_dict, item_dict, context_dict, output_length, args, device_id):
@@ -205,7 +206,7 @@ class DialogModel(modules.CudaModule):
 
         # perform attention
         logit = self.attn(h).squeeze(1)
-        prob = F.softmax(logit).unsqueeze(1).expand_as(h)
+        prob = F.softmax(logit,dim=1).unsqueeze(1).expand_as(h)
         attn = torch.sum(torch.mul(h, prob), 0, keepdim=True)
 
         # concatenate attention and context hidden and pass it to the selection encoder
@@ -295,14 +296,16 @@ class DialogModel(modules.CudaModule):
             out = self.decoder(lang_h)
             scores = F.linear(out, self.word_encoder.weight).div(temperature)
             # subtract constant to avoid overflows in exponentiation
-            scores = scores.add(-scores.max().data[0]).squeeze(0)
+            scores = scores.add(-scores.max().item()).squeeze(0)
 
             # disable special tokens from being generated in a normal turns
             if not resume:
                 mask = Variable(self.special_token_mask)
                 scores = scores.add(mask)
 
-            prob = F.softmax(scores)
+            # http://pytorch.apachecn.org/en/0.3.0/_modules/torch/nn/functional.html
+            # scores.dim() == 1, so implicitly _get_softmax_dim returns 0
+            prob = F.softmax(scores,dim=0)
             logprob = F.log_softmax(scores)
 
             word = prob.multinomial().detach()
