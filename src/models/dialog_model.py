@@ -166,14 +166,15 @@ class DialogModel(modules.CudaModule):
 
         # runs selection rnn over the hidden state h
         attn_h = self.zero_hid(h.size(1), self.args.nhid_attn, copies=2)
+
+        # compact weights to reduce memory usage
+        self.sel_rnn.flatten_parameters()
         h, _ = self.sel_rnn(h, attn_h)
 
         # perform attention
         h = h.transpose(0, 1).contiguous()
         logit = self.attn(h.view(-1, 2 * self.args.nhid_attn)).view(h.size(0), h.size(1))
 
-        # ALEX notes upgrading to Torch 0.4: Formerly implicitly defined dimension by facebook research team
-        # input dimensions of logit.dim() is 2, which results in default dim=0 passed to Softmax function
         # http://pytorch.apachecn.org/en/0.3.0/_modules/torch/nn/functional.html _get_softmax_dim()
         prob = F.softmax(logit,dim=1).unsqueeze(2).expand_as(h)
         attn = torch.sum(torch.mul(h, prob), 1, keepdim=True).transpose(0, 1).contiguous()
@@ -383,6 +384,8 @@ class DialogModel(modules.CudaModule):
 
         inpt_emb = self.dropout(inpt_emb)
 
+        # compact weights to reduce memory footprint
+        self.sel_rnn.flatten_parameters()
         out, _ = self.reader(inpt_emb, lang_h)
         decoded = self.decoder(out.view(-1, out.size(2)))
 
