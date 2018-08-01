@@ -156,7 +156,7 @@ class LstmAgent(Agent):
 
         choice_logit = torch.sum(torch.cat(choices_logits, 1), 1, keepdim=False)
         # subtract the max to softmax more stable
-        choice_logit = choice_logit.sub(choice_logit.max().data[0])
+        choice_logit = choice_logit.sub(choice_logit.max().item())
         prob = F.softmax(choice_logit)
         if sample:
             # sample a choice
@@ -167,10 +167,10 @@ class LstmAgent(Agent):
             _, idx = prob.max(0, keepdim=True)
             logprob = None
 
-        p_agree = prob[idx.data[0]]
+        p_agree = prob[idx.item()]
 
         # Pick only your choice
-        return choices[idx.data[0]][:self.domain.selection_length()], logprob, p_agree.data[0]
+        return choices[idx.item()][:self.domain.selection_length()], logprob, p_agree.item()
 
     def choose(self):
         choice, _, _ = self._choose()
@@ -370,7 +370,7 @@ class RlAgent(LstmAgent):
         if self.args.visual and self.t % 10 == 0:
             self.model_plot.update(self.t)
             self.reward_plot.update('reward', self.t, reward)
-            self.loss_plot.update('loss', self.t, loss.data[0])
+            self.loss_plot.update('loss', self.t, loss.item())
         self.opt.step()
 
 
