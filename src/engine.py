@@ -115,7 +115,7 @@ class Engine(object):
             if self.args.visual and self.t % 100 == 0:
                 self.model_plot.update(self.t)
 
-            total_loss += loss.data[0]
+            total_loss += loss.item()
 
         total_loss /= len(trainset)
         time_elapsed = time.time() - start_time
@@ -144,8 +144,8 @@ class Engine(object):
             out, hid, tgt, sel_out, sel_tgt = Engine.forward(self.model, batch, volatile=True)
 
             # evaluate LM and selection losses
-            valid_loss += tgt.size(0) * self.crit(out.view(-1, N), tgt).data[0]
-            select_loss += self.sel_crit(sel_out, sel_tgt).data[0]
+            valid_loss += tgt.size(0) * self.crit(out.view(-1, N), tgt).item()
+            select_loss += self.sel_crit(sel_out, sel_tgt).item()
 
         # dividing by the number of words in the input, not the tokens modeled,
         # because the latter includes padding
