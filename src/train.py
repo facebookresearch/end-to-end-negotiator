@@ -8,23 +8,25 @@ Training script. Performs supervised training of DialogModel.
 """
 
 import argparse
-import sys
-import time
-import random
 import itertools
-import re
-
+import logging
 import numpy as np
+import random
+import re
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
+import sys
+import time
 
+# local imports
 import data
 from models.dialog_model import DialogModel
 import utils
 from engine import Engine
 
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 def main():
     parser = argparse.ArgumentParser(description='training script')
@@ -87,16 +89,26 @@ def main():
     args = parser.parse_args()
 
     device_id = utils.use_cuda(args.cuda)
+    logging.info("Starting training")
+    logging.info("CUDA is %s" % ("enabled. Using device_id:"+str(device_id) + " version:" \
+        +str(torch.version.cuda) + " on gpu:" + torch.cuda.get_device_name(0) if args.cuda else "disabled"))
     utils.set_seed(args.seed)
 
+    logging.info("Building word corpus, requiring minimum word frequency of %d for dictionary" % (args.unk_threshold))
     corpus = data.WordCorpus(args.data, freq_cutoff=args.unk_threshold, verbose=True)
+
+    logging.info("Building RNN-based dialogue model from word corpus")
     model = DialogModel(corpus.word_dict, corpus.item_dict, corpus.context_dict,
         corpus.output_length, args, device_id)
     if device_id is not None:
+        logging.info("-- initializing GPU")
         model.cuda(device_id)
+  
+    logging.info("Initializing engine")
     engine = Engine(model, args, device_id, verbose=True)
+    logging.info("Training model")
     train_loss, valid_loss, select_loss = engine.train(corpus)
-    print('final selectppl %.3f' % np.exp(select_loss))
+    logging.info('final selectppl %.3f' % np.exp(select_loss))
 
     utils.save_model(engine.get_model(), args.model_file)
 

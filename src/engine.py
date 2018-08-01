@@ -192,6 +192,9 @@ class Engine(object):
             traindata = corpus.train_dataset(self.args.bsz, device_id=self.device_id)
             _, _, valid_select_loss = self.iter(N, epoch, lr, traindata, validdata)
 
+            print("valid_select_loss is type %s and %.5f" % (type(valid_select_loss),valid_select_loss))
+            print("best_valid_select_loss is type %s and %.5f" % (type(best_valid_select_loss),best_valid_select_loss))
+            
             if valid_select_loss < best_valid_select_loss:
                 best_valid_select_loss = valid_select_loss
                 best_model = copy.deepcopy(self.model)
