@@ -35,7 +35,6 @@ class Criterion(object):
             w[dictionary.get_idx(tok)] = 0.0
         if device_id is not None:
             w = w.cuda(device_id)
-        # ALEX Note: formerly size_average=True (Deprecated)
         # https://pytorch.org/docs/stable/nn.html 
         self.crit = nn.CrossEntropyLoss(w, reduction=reduction)
 
@@ -66,27 +65,30 @@ class Engine(object):
             self.ppl_plot = vis.Plot(['train', 'valid', 'valid_select'],
                 'perplexity', 'ppl', 'epoch', running_n=1)
 
-    def forward(model, batch, volatile=True):
+    def forward(model, batch, requires_grad=False):
         """A helper function to perform a forward pass on a batch."""
-        # extract the batch into contxt, input, target and selection target
-        ctx, inpt, tgt, sel_tgt = batch
-        # create variables
-        ctx = Variable(ctx, volatile=volatile)
-        inpt = Variable(inpt, volatile=volatile)
-        tgt = Variable(tgt, volatile=volatile)
-        sel_tgt = Variable(sel_tgt, volatile=volatile)
 
-        # get context hidden state
-        ctx_h = model.forward_context(ctx)
-        # create initial hidden state for the language rnn
-        lang_h = model.zero_hid(ctx_h.size(1), model.args.nhid_lang)
+        with torch.set_grad_enabled(requires_grad):
+            # extract the batch into contxt, input, target and selection target
+            ctx, inpt, tgt, sel_tgt = batch
 
-        # perform forward for the language model
-        out, lang_h = model.forward_lm(inpt, lang_h, ctx_h)
-        # perform forward for the selection
-        sel_out = model.forward_selection(inpt, lang_h, ctx_h)
+            # create variables
+            ctx = Variable(ctx)
+            inpt = Variable(inpt)
+            tgt = Variable(tgt)
+            sel_tgt = Variable(sel_tgt)
 
-        return out, lang_h, tgt, sel_out, sel_tgt
+            # get context hidden state
+            ctx_h = model.forward_context(ctx)
+            # create initial hidden state for the language rnn
+            lang_h = model.zero_hid(ctx_h.size(1), model.args.nhid_lang)
+
+            # perform forward for the language model
+            out, lang_h = model.forward_lm(inpt, lang_h, ctx_h)
+            # perform forward for the selection
+            sel_out = model.forward_selection(inpt, lang_h, ctx_h)
+
+            return out, lang_h, tgt, sel_out, sel_tgt
 
     def get_model(self):
         """Extracts the model."""
@@ -104,7 +106,7 @@ class Engine(object):
         for batch in trainset:
             self.t += 1
             # forward pass
-            out, hid, tgt, sel_out, sel_tgt = Engine.forward(self.model, batch, volatile=False)
+            out, hid, tgt, sel_out, sel_tgt = Engine.forward(self.model, batch, requires_grad=True)
 
             # compute LM loss and selection loss
             loss = self.crit(out.view(-1, N), tgt)
@@ -127,7 +129,7 @@ class Engine(object):
     def train_single(self, N, trainset):
         """A helper function to train on a random batch."""
         batch = random.choice(trainset)
-        out, hid, tgt, sel_out, sel_tgt = Engine.forward(self.model, batch, volatile=False)
+        out, hid, tgt, sel_out, sel_tgt = Engine.forward(self.model, batch, requires_grad=True)
         loss = self.crit(out.view(-1, N), tgt) + \
             self.sel_crit(sel_out, sel_tgt) * self.model.args.sel_weight
         self.opt.zero_grad()
@@ -144,7 +146,7 @@ class Engine(object):
         valid_loss, select_loss = 0, 0
         for batch in validset:
             # compute forward pass
-            out, hid, tgt, sel_out, sel_tgt = Engine.forward(self.model, batch, volatile=True)
+            out, hid, tgt, sel_out, sel_tgt = Engine.forward(self.model, batch, requires_grad=False)
 
             # evaluate LM and selection losses
             valid_loss += tgt.size(0) * self.crit(out.view(-1, N), tgt).item()
@@ -165,11 +167,11 @@ class Engine(object):
         valid_loss, valid_select_loss = self.valid_pass(N, validset, validset_stats)
 
         if self.verbose:
-            logging.info('| epoch %03d | trainloss %.3f | trainppl %.3f | s/epoch %.2f | lr %0.8f' % (
+            logging.info('| epoch %03d | train_loss %.3f | train_ppl %.3f | s/epoch %.2f | lr %0.8f' % (
                 epoch, train_loss, np.exp(train_loss), train_time, lr))
-            logging.info('| epoch %03d | validloss %.3f | validppl %.3f' % (
+            logging.info('| epoch %03d | valid_loss %.3f | valid_ppl %.3f' % (
                 epoch, valid_loss, np.exp(valid_loss)))
-            logging.info('| epoch %03d | validselectloss %.3f | validselectppl %.3f' % (
+            logging.info('| epoch %03d | valid_select_loss %.3f | valid_select_ppl %.3f' % (
                 epoch, valid_select_loss, np.exp(valid_select_loss)))
 
         if self.args.visual:
