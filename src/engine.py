@@ -15,7 +15,7 @@ import itertools
 import sys
 import copy
 import re
-
+import logging
 import torch
 from torch import optim
 import torch.nn as nn
@@ -25,6 +25,7 @@ import numpy as np
 from data import STOP_TOKENS
 import vis
 
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 class Criterion(object):
     """Weighted CrossEntropyLoss."""
@@ -162,11 +163,11 @@ class Engine(object):
         valid_loss, valid_select_loss = self.valid_pass(N, validset, validset_stats)
 
         if self.verbose:
-            print('| epoch %03d | trainloss %.3f | trainppl %.3f | s/epoch %.2f | lr %0.8f' % (
+            logging.info('| epoch %03d | trainloss %.3f | trainppl %.3f | s/epoch %.2f | lr %0.8f' % (
                 epoch, train_loss, np.exp(train_loss), train_time, lr))
-            print('| epoch %03d | validloss %.3f | validppl %.3f' % (
+            logging.info('| epoch %03d | validloss %.3f | validppl %.3f' % (
                 epoch, valid_loss, np.exp(valid_loss)))
-            print('| epoch %03d | validselectloss %.3f | validselectppl %.3f' % (
+            logging.info('| epoch %03d | validselectloss %.3f | validselectppl %.3f' % (
                 epoch, valid_select_loss, np.exp(valid_select_loss)))
 
         if self.args.visual:
