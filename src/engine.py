@@ -134,7 +134,7 @@ class Engine(object):
             self.sel_crit(sel_out, sel_tgt) * self.model.args.sel_weight
         self.opt.zero_grad()
         loss.backward()
-        torch.nn.utils.clip_grad_norm(self.model.parameters(), self.args.clip)
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.clip)
         self.opt.step()
         return loss
 
@@ -202,7 +202,7 @@ class Engine(object):
                 best_model = copy.deepcopy(self.model)
 
         if self.verbose:
-            loggin.info('| start annealing | best validselectloss %.3f | best validselectppl %.3f' % (
+            logging.info('| start annealing | best validselectloss %.3f | best validselectppl %.3f' % (
                 best_valid_select_loss, np.exp(best_valid_select_loss)))
 
         self.model = best_model

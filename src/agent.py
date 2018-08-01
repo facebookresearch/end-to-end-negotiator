@@ -9,7 +9,7 @@ A set of classes that facilitate a dialogue between agents.
 
 import sys
 from collections import defaultdict
-
+import logging
 import numpy as np
 import torch
 from torch import optim, autograd
@@ -20,6 +20,7 @@ import torch.nn.functional as F
 import vis
 import domain
 
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 class Agent(object):
     """Agent's interface.
@@ -157,7 +158,10 @@ class LstmAgent(Agent):
         choice_logit = torch.sum(torch.cat(choices_logits, 1), 1, keepdim=False)
         # subtract the max to softmax more stable
         choice_logit = choice_logit.sub(choice_logit.max().item())
-        prob = F.softmax(choice_logit)
+
+        # http://pytorch.apachecn.org/en/0.3.0/_modules/torch/nn/functional.html
+        # choice_logit.dim() == 1, so implicitly _get_softmax_dim returns 0
+        prob = F.softmax(choice_logit,dim=0)
         if sample:
             # sample a choice
             idx = prob.multinomial().detach()
@@ -366,7 +370,7 @@ class RlAgent(LstmAgent):
 
         self.opt.zero_grad()
         loss.backward()
-        nn.utils.clip_grad_norm(self.model.parameters(), self.args.rl_clip)
+        nn.utils.clip_grad_norm_(self.model.parameters(), self.args.rl_clip)
         if self.args.visual and self.t % 10 == 0:
             self.model_plot.update(self.t)
             self.reward_plot.update('reward', self.t, reward)
