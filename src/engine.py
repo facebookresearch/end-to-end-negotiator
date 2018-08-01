@@ -114,7 +114,7 @@ class Engine(object):
             self.opt.zero_grad()
             # backward step with gradient clipping
             loss.backward()
-            torch.nn.utils.clip_grad_norm(self.model.parameters(), self.args.clip)
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.clip)
             self.opt.step()
 
             if self.args.visual and self.t % 100 == 0:
