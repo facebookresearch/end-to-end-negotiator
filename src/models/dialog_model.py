@@ -146,6 +146,7 @@ class DialogModel(modules.CudaModule):
         inpt_emb = torch.cat([inpt_emb, ctx_h_rep], 2)
 
         # finally read in the words
+        self.reader.flatten_parameters()
         out, lang_h = self.reader(inpt_emb, lang_h)
 
         return out, lang_h
@@ -202,6 +203,7 @@ class DialogModel(modules.CudaModule):
 
         # runs selection rnn over the hidden state h
         attn_h = self.zero_hid(h.size(1), self.args.nhid_attn, copies=2)
+        self.sel_rnn.flatten_parameters()
         h, _ = self.sel_rnn(h, attn_h)
         h = h.squeeze(1)
 
