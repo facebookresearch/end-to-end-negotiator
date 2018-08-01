@@ -29,13 +29,15 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 
 class Criterion(object):
     """Weighted CrossEntropyLoss."""
-    def __init__(self, dictionary, device_id=None, bad_toks=[], size_average=True):
+    def __init__(self, dictionary, device_id=None, bad_toks=[], reduction='elementwise_mean'):
         w = torch.Tensor(len(dictionary)).fill_(1)
         for tok in bad_toks:
             w[dictionary.get_idx(tok)] = 0.0
         if device_id is not None:
             w = w.cuda(device_id)
-        self.crit = nn.CrossEntropyLoss(w, size_average=size_average)
+        # ALEX Note: formerly size_average=True (Deprecated)
+        # https://pytorch.org/docs/stable/nn.html 
+        self.crit = nn.CrossEntropyLoss(w, reduction=reduction)
 
     def __call__(self, out, tgt):
         return self.crit(out, tgt)
