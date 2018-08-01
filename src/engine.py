@@ -25,8 +25,6 @@ import numpy as np
 from data import STOP_TOKENS
 import vis
 
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-
 class Criterion(object):
     """Weighted CrossEntropyLoss."""
     def __init__(self, dictionary, device_id=None, bad_toks=[], reduction='elementwise_mean'):

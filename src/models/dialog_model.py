@@ -24,8 +24,6 @@ from data import STOP_TOKENS
 from domain import get_domain
 from models import modules
 
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-
 class DialogModel(modules.CudaModule):
     def __init__(self, word_dict, item_dict, context_dict, output_length, args, device_id):
         super(DialogModel, self).__init__(device_id)
@@ -209,7 +207,6 @@ class DialogModel(modules.CudaModule):
 
         # perform attention
         logit = self.attn(h).squeeze(1)
-        logging.error(logit.dim())
 
         # http://pytorch.apachecn.org/en/0.3.0/_modules/torch/nn/functional.html
         # scores.dim() == 1, so implicitly _get_softmax_dim returns 0

@@ -26,7 +26,7 @@ from models.dialog_model import DialogModel
 import utils
 from engine import Engine
 
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(filename)s : %(message)s', level=logging.INFO)
 
 def main():
     parser = argparse.ArgumentParser(description='training script')
@@ -101,7 +101,7 @@ def main():
     model = DialogModel(corpus.word_dict, corpus.item_dict, corpus.context_dict,
         corpus.output_length, args, device_id)
     if device_id is not None:
-        logging.info("-- initializing GPU")
+        logging.info("Initializing GPU")
         model.cuda(device_id)
   
     logging.info("Initializing engine")

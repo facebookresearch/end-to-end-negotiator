@@ -12,7 +12,7 @@ import pdb
 import random
 import re
 import time
-
+import logging
 import numpy as np
 import torch
 from torch import optim
@@ -26,6 +26,7 @@ from utils import ContextGenerator
 from agent import LstmAgent, LstmRolloutAgent, RlAgent
 from dialog import Dialog, DialogLogger
 
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(filename)s : %(message)s', level=logging.INFO)
 
 class Reinforce(object):
     """Facilitates a dialogue between two agents and constantly updates them."""
@@ -59,6 +60,7 @@ class Reinforce(object):
             self.logger.dump('')
             if n % 100 == 0:
                 self.logger.dump('%d: %s' % (n, self.dialog.show_metrics()), forced=True)
+                logging.info('%d: %s' % (n, self.dialog.show_metrics()))
 
         def dump_stats(dataset, stats, name):
             loss, select_loss = self.engine.valid_pass(N, dataset, stats)
@@ -134,29 +136,43 @@ def main():
     args = parser.parse_args()
 
     device_id = utils.use_cuda(args.cuda)
+    logging.info("Starting training using pytorch version:%s" % (str(torch.__version__)))
+    logging.info("CUDA is %s" % ("enabled. Using device_id:"+str(device_id) + " version:" \
+        +str(torch.version.cuda) + " on gpu:" + torch.cuda.get_device_name(0) if args.cuda else "disabled"))
 
+    logging.info("Loading alice_model: %s" % (args.alice_model_file))
     alice_model = utils.load_model(args.alice_model_file)
     # we don't want to use Dropout during RL
+    logging.info("Evaluating alice_model: %s" % (args.alice_model_file))
     alice_model.eval()
     # Alice is a RL based agent, meaning that she will be learning while selfplaying
+    logging.info("Creating RlAgent from alice_model: %s" % (args.alice_model_file))
     alice = RlAgent(alice_model, args, name='Alice')
 
     # we keep Bob frozen, i.e. we don't update his parameters
+    logging.info("Initializing Bob's (--smart_bob) LstmRolloutAgent" if args.smart_bob \
+        else "Initializing Bob's (not --smart_bob) LstmAgent" )
     bob_ty = LstmRolloutAgent if args.smart_bob else LstmAgent
+    logging.info("Loading (frozen) bob_model: %s" % (args.bob_model_file))
     bob_model = utils.load_model(args.bob_model_file)
+    logging.info("Evaluating bob_model: %s" % (args.alice_model_file))
     bob_model.eval()
     bob = bob_ty(bob_model, args, name='Bob')
 
+    logging.info("Initializing communication dialogue between Alice and Bob")
     dialog = Dialog([alice, bob], args)
     logger = DialogLogger(verbose=args.verbose, log_file=args.log_file)
     ctx_gen = ContextGenerator(args.context_file)
 
+    logging.info("Building word corpus, requiring minimum word frequency of %d for dictionary" % (args.unk_threshold))
     corpus = data.WordCorpus(args.data, freq_cutoff=args.unk_threshold)
     engine = Engine(alice_model, args, device_id, verbose=False)
 
+    logging.info("Starting reinforcement training")
     reinforce = Reinforce(dialog, ctx_gen, args, engine, corpus, logger)
     reinforce.run()
 
+    logging.info("Saving updated Alice model to %s" % (args.output_model_file))
     utils.save_model(alice.model, args.output_model_file)
 
 

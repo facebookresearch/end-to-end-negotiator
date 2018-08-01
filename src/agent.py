@@ -20,8 +20,6 @@ import torch.nn.functional as F
 import vis
 import domain
 
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-
 class Agent(object):
     """Agent's interface.
 
@@ -321,6 +319,8 @@ class RlAgent(LstmAgent):
             self.reward_plot = vis.Plot(['reward',], 'reward', 'reward')
             self.loss_plot = vis.Plot(['loss',], 'loss', 'loss')
         self.t = 0
+        # Explicitly activate training_mode to avoid runtime error with pytorch > 0.4.0
+        self.model.train()
 
     def feed_context(self, ctx):
         super(RlAgent, self).feed_context(ctx)
