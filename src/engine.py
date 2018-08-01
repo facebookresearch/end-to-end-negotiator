@@ -202,7 +202,7 @@ class Engine(object):
                 best_model = copy.deepcopy(self.model)
 
         if self.verbose:
-            print('| start annealing | best validselectloss %.3f | best validselectppl %.3f' % (
+            loggin.info('| start annealing | best validselectloss %.3f | best validselectppl %.3f' % (
                 best_valid_select_loss, np.exp(best_valid_select_loss)))
 
         self.model = best_model

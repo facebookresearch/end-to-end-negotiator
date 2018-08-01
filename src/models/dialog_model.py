@@ -385,7 +385,7 @@ class DialogModel(modules.CudaModule):
         inpt_emb = self.dropout(inpt_emb)
 
         # compact weights to reduce memory footprint
-        self.sel_rnn.flatten_parameters()
+        self.reader.flatten_parameters()
         out, _ = self.reader(inpt_emb, lang_h)
         decoded = self.decoder(out.view(-1, out.size(2)))
 
