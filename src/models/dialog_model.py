@@ -311,7 +311,7 @@ class DialogModel(modules.CudaModule):
             # http://pytorch.apachecn.org/en/0.3.0/_modules/torch/nn/functional.html
             # scores.dim() == 1, so implicitly _get_softmax_dim returns 0
             prob = F.softmax(scores,dim=0)
-            logprob = F.log_softmax(scores)
+            logprob = F.log_softmax(scores,dim=0)
 
             # ALEX verify explicitly defining num_samples here
             word = prob.multinomial(num_samples=1).detach()
