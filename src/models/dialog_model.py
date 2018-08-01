@@ -177,6 +177,7 @@ class DialogModel(modules.CudaModule):
         logit = self.attn(h.view(-1, 2 * self.args.nhid_attn)).view(h.size(0), h.size(1))
 
         # http://pytorch.apachecn.org/en/0.3.0/_modules/torch/nn/functional.html _get_softmax_dim()
+        # scores.dim() == 2, so implicitly _get_softmax_dim returns 1
         prob = F.softmax(logit,dim=1).unsqueeze(2).expand_as(h)
         attn = torch.sum(torch.mul(h, prob), 1, keepdim=True).transpose(0, 1).contiguous()
 
@@ -206,7 +207,11 @@ class DialogModel(modules.CudaModule):
 
         # perform attention
         logit = self.attn(h).squeeze(1)
-        prob = F.softmax(logit,dim=1).unsqueeze(1).expand_as(h)
+        logging.error(logit.dim())
+
+        # http://pytorch.apachecn.org/en/0.3.0/_modules/torch/nn/functional.html
+        # scores.dim() == 1, so implicitly _get_softmax_dim returns 0
+        prob = F.softmax(logit,dim=0).unsqueeze(1).expand_as(h)
         attn = torch.sum(torch.mul(h, prob), 0, keepdim=True)
 
         # concatenate attention and context hidden and pass it to the selection encoder
@@ -308,7 +313,8 @@ class DialogModel(modules.CudaModule):
             prob = F.softmax(scores,dim=0)
             logprob = F.log_softmax(scores)
 
-            word = prob.multinomial().detach()
+            # ALEX verify explicitly defining num_samples here
+            word = prob.multinomial(num_samples=1).detach()
             logprob = logprob.gather(0, word)
 
             logprobs.append(logprob)
