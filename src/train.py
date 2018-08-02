@@ -27,7 +27,7 @@ from engine import Engine
 from models.dialog_model import DialogModel
 import utils
 
-logging.basicConfig(config.log_format, level=config.log_level)
+logging.basicConfig(format=config.log_format, level=config.log_level)
 
 def main():
     parser = argparse.ArgumentParser(description='training script')

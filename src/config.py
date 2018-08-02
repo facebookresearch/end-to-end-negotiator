@@ -7,6 +7,8 @@
 Configuration script. Stores variables and settings used across application
 """
 
+import logging
+
 log_level = logging.INFO
 log_format = '%(asctime)s : %(levelname)s : %(filename)s : %(message)s'
 
