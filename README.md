@@ -41,7 +41,7 @@ Each dialogue is converted into two training examples in the dataset, showing th
 ```
 
 # Setup
-All code was developed with Python 3.0 on CentOS Linux 7. In addition, we used PyTorch and CUDA8.
+All code was developed with Python 3.0 on CentOS Linux 7, and tested on Ubuntu 16.04. In addition, we used PyTorch 0.4.1, CUDA 9.0, and Visdom 0.1.8.4.
 
 We recommend to use [Anaconda](https://www.continuum.io/why-anaconda). In order to set up a working environment follow the steps below:
 ```
@@ -50,7 +50,7 @@ conda create -n py30 python=3 anaconda
 # Activate environment
 source activate py30
 # Install PyTorch
-conda install pytorch torchvision cuda80 -c soumith
+conda install pytorch torchvision cuda90 -c pytorch
 # Install Visdom if you want to use visualization
 pip install visdom
 ```
