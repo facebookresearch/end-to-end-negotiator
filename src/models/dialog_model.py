@@ -11,7 +11,7 @@ import sys
 import re
 import pdb
 import time
-
+import logging
 import numpy as np
 import torch
 import torch.nn as nn
@@ -23,7 +23,6 @@ import torch.nn.functional as F
 from data import STOP_TOKENS
 from domain import get_domain
 from models import modules
-
 
 class DialogModel(modules.CudaModule):
     def __init__(self, word_dict, item_dict, context_dict, output_length, args, device_id):
@@ -145,6 +144,7 @@ class DialogModel(modules.CudaModule):
         inpt_emb = torch.cat([inpt_emb, ctx_h_rep], 2)
 
         # finally read in the words
+        self.reader.flatten_parameters()
         out, lang_h = self.reader(inpt_emb, lang_h)
 
         return out, lang_h
@@ -166,12 +166,16 @@ class DialogModel(modules.CudaModule):
 
         # runs selection rnn over the hidden state h
         attn_h = self.zero_hid(h.size(1), self.args.nhid_attn, copies=2)
+
+        # compact weights to reduce memory usage
+        self.sel_rnn.flatten_parameters()
         h, _ = self.sel_rnn(h, attn_h)
 
         # perform attention
         h = h.transpose(0, 1).contiguous()
         logit = self.attn(h.view(-1, 2 * self.args.nhid_attn)).view(h.size(0), h.size(1))
-        prob = F.softmax(logit).unsqueeze(2).expand_as(h)
+
+        prob = F.softmax(logit,dim=1).unsqueeze(2).expand_as(h)
         attn = torch.sum(torch.mul(h, prob), 1, keepdim=True).transpose(0, 1).contiguous()
 
         # concatenate attention and context hidden and pass it to the selection encoder
@@ -195,12 +199,14 @@ class DialogModel(modules.CudaModule):
 
         # runs selection rnn over the hidden state h
         attn_h = self.zero_hid(h.size(1), self.args.nhid_attn, copies=2)
+        self.sel_rnn.flatten_parameters()
         h, _ = self.sel_rnn(h, attn_h)
         h = h.squeeze(1)
 
         # perform attention
         logit = self.attn(h).squeeze(1)
-        prob = F.softmax(logit).unsqueeze(1).expand_as(h)
+
+        prob = F.softmax(logit,dim=0).unsqueeze(1).expand_as(h)
         attn = torch.sum(torch.mul(h, prob), 0, keepdim=True)
 
         # concatenate attention and context hidden and pass it to the selection encoder
@@ -290,17 +296,18 @@ class DialogModel(modules.CudaModule):
             out = self.decoder(lang_h)
             scores = F.linear(out, self.word_encoder.weight).div(temperature)
             # subtract constant to avoid overflows in exponentiation
-            scores = scores.add(-scores.max().data[0]).squeeze(0)
+            scores = scores.add(-scores.max().item()).squeeze(0)
 
             # disable special tokens from being generated in a normal turns
             if not resume:
                 mask = Variable(self.special_token_mask)
                 scores = scores.add(mask)
 
-            prob = F.softmax(scores)
-            logprob = F.log_softmax(scores)
+            prob = F.softmax(scores,dim=0)
+            logprob = F.log_softmax(scores,dim=0)
 
-            word = prob.multinomial().detach()
+            # explicitly defining num_samples for pytorch 0.4.1
+            word = prob.multinomial(num_samples=1).detach()
             logprob = logprob.gather(0, word)
 
             logprobs.append(logprob)
@@ -379,6 +386,8 @@ class DialogModel(modules.CudaModule):
 
         inpt_emb = self.dropout(inpt_emb)
 
+        # compact weights to reduce memory footprint
+        self.reader.flatten_parameters()
         out, _ = self.reader(inpt_emb, lang_h)
         decoded = self.decoder(out.view(-1, out.size(2)))
 

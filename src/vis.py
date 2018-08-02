@@ -47,7 +47,7 @@ class Plot(object):
             self.opts['legend'] = [metric,]
             self.win = self.vis.line(X=X, Y=Y, opts=self.opts)
         else:
-            self.vis.updateTrace(X=X, Y=Y, win=self.win, name=metric)
+            self.vis.line(X=X, Y=Y, win=self.win, update='append', name=metric)
 
 
 class ModulePlot(object):
@@ -79,8 +79,8 @@ class ModulePlot(object):
         def update_plot(m, n):
             for k, p in m._parameters.items():
                 if self.plot_weight:
-                    self.plots[n + '_w'].update(k, x, p.norm().data[0])
+                    self.plots[n + '_w'].update(k, x, p.norm().item())
                 if self.plot_grad and hasattr(p, 'grad') and p.grad is not None:
-                    self.plots[n + '_g'].update(k, x, p.grad.norm().data[0])
+                    self.plots[n + '_g'].update(k, x, p.grad.norm().item())
 
         self._for_all(update_plot, self.module)

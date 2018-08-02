@@ -9,7 +9,7 @@ A set of classes that facilitate a dialogue between agents.
 
 import sys
 from collections import defaultdict
-
+import logging
 import numpy as np
 import torch
 from torch import optim, autograd
@@ -19,7 +19,6 @@ import torch.nn.functional as F
 
 import vis
 import domain
-
 
 class Agent(object):
     """Agent's interface.
@@ -156,8 +155,11 @@ class LstmAgent(Agent):
 
         choice_logit = torch.sum(torch.cat(choices_logits, 1), 1, keepdim=False)
         # subtract the max to softmax more stable
-        choice_logit = choice_logit.sub(choice_logit.max().data[0])
-        prob = F.softmax(choice_logit)
+        choice_logit = choice_logit.sub(choice_logit.max().item())
+
+        # http://pytorch.apachecn.org/en/0.3.0/_modules/torch/nn/functional.html
+        # choice_logit.dim() == 1, so implicitly _get_softmax_dim returns 0
+        prob = F.softmax(choice_logit,dim=0)
         if sample:
             # sample a choice
             idx = prob.multinomial().detach()
@@ -167,10 +169,10 @@ class LstmAgent(Agent):
             _, idx = prob.max(0, keepdim=True)
             logprob = None
 
-        p_agree = prob[idx.data[0]]
+        p_agree = prob[idx.item()]
 
         # Pick only your choice
-        return choices[idx.data[0]][:self.domain.selection_length()], logprob, p_agree.data[0]
+        return choices[idx.item()][:self.domain.selection_length()], logprob, p_agree.item()
 
     def choose(self):
         choice, _, _ = self._choose()
@@ -317,6 +319,8 @@ class RlAgent(LstmAgent):
             self.reward_plot = vis.Plot(['reward',], 'reward', 'reward')
             self.loss_plot = vis.Plot(['loss',], 'loss', 'loss')
         self.t = 0
+        # Explicitly activate training_mode to avoid runtime error with pytorch > 0.4.0
+        self.model.train()
 
     def feed_context(self, ctx):
         super(RlAgent, self).feed_context(ctx)
@@ -366,11 +370,11 @@ class RlAgent(LstmAgent):
 
         self.opt.zero_grad()
         loss.backward()
-        nn.utils.clip_grad_norm(self.model.parameters(), self.args.rl_clip)
+        nn.utils.clip_grad_norm_(self.model.parameters(), self.args.rl_clip)
         if self.args.visual and self.t % 10 == 0:
             self.model_plot.update(self.t)
             self.reward_plot.update('reward', self.t, reward)
-            self.loss_plot.update('loss', self.t, loss.data[0])
+            self.loss_plot.update('loss', self.t, loss.item())
         self.opt.step()
 
 

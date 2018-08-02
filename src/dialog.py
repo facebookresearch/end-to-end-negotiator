@@ -6,10 +6,9 @@
 """
 Dialogue runner class. Implementes communication between two Agents.
 """
-
 import sys
 import pdb
-
+import logging
 import numpy as np
 
 from metric import MetricsContainer
@@ -17,6 +16,7 @@ import data
 import utils
 import domain
 
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(filename)s : %(message)s', level=logging.INFO)
 
 class DialogLogger(object):
     """Logger for a dialogue."""
@@ -186,7 +186,6 @@ class Dialog(object):
                 break
             writer, reader = reader, writer
 
-
         choices = []
         # generate choices for each of the agents
         for agent in self.agents:
@@ -201,6 +200,7 @@ class Dialog(object):
         # perform update, in case if any of the agents is learnable
         for agent, reward in zip(self.agents, rewards):
             logger.dump_reward(agent.name, agree, reward)
+            logging.debug("%s : %s : %s" % (str(agent.name), str(agree), str(rewards)))
             agent.update(agree, reward)
 
         if agree:

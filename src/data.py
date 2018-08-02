@@ -14,7 +14,7 @@ import pdb
 import copy
 import re
 from collections import OrderedDict
-
+import logging
 import torch
 import numpy as np
 
@@ -159,7 +159,7 @@ class WordCorpus(object):
             unks += np.count_nonzero([idx == unk for idx in word_idxs])
 
         if self.verbose:
-            print('dataset %s, total %d, unks %s, ratio %0.2f%%' % (
+            logging.info('dataset %s, total %d, unks %s, ratio %0.2f%%' % (
                 file_name, total, unks, 100. * unks / total))
         return dataset
 
