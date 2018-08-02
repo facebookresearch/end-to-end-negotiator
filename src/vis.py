@@ -47,7 +47,7 @@ class Plot(object):
             self.opts['legend'] = [metric,]
             self.win = self.vis.line(X=X, Y=Y, opts=self.opts)
         else:
-            self.vis.updateTrace(X=X, Y=Y, win=self.win, name=metric)
+            self.vis.line(X=X, Y=Y, win=self.win, update='append', name=metric)
 
 
 class ModulePlot(object):
