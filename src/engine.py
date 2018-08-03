@@ -185,7 +185,7 @@ class Engine(object):
     def train(self, corpus):
         """Entry point."""
         N = len(corpus.word_dict)
-        best_model, best_valid_select_loss = None, 1e100
+        best_model, best_valid_select_loss = None, 1e20
         lr = self.args.lr
         last_decay_epoch = 0
         self.t = 0
