@@ -7,17 +7,39 @@ The code trains neural networks to hold negotiations in natural language, and al
 # Citation
 If you want to use this code in your research, please cite:
 ```
-@article{lewis2017dealornodeal,
-  author          = {Lewis, Mike and Yarats, Denis and Dauphin, Yann N and Parikh, Devi and Batra, Dhruv},
-  title           = "{Deal or No Deal? End-to-End Learning for Negotiation Dialogues}",
-  journal         = {ArXiv e-prints},
-  archivePrefix   = "arXiv",
-  eprinttype      = {arxiv},
-  eprint          = {1706.05125},
-  primaryClass    = "cs.AI",
-  keywords        = {Computer Science - Artificial Intelligence},
-  year            = 2017,
-  month           = June,
+@inproceedings{DBLP:conf/icml/YaratsL18,
+  author    = {Denis Yarats and
+               Mike Lewis},
+  title     = {Hierarchical Text Generation and Planning for Strategic Dialogue},
+  booktitle = {Proceedings of the 35th International Conference on Machine Learning,
+               {ICML} 2018, Stockholmsm{\"{a}}ssan, Stockholm, Sweden, July
+               10-15, 2018},
+  pages     = {5587--5595},
+  year      = {2018},
+  crossref  = {DBLP:conf/icml/2018},
+  url       = {http://proceedings.mlr.press/v80/yarats18a.html},
+  timestamp = {Fri, 13 Jul 2018 14:58:25 +0200},
+  biburl    = {https://dblp.org/rec/bib/conf/icml/YaratsL18},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@inproceedings{DBLP:conf/emnlp/LewisYDPB17,
+  author    = {Mike Lewis and
+               Denis Yarats and
+               Yann Dauphin and
+               Devi Parikh and
+               Dhruv Batra},
+  title     = {Deal or No Deal? End-to-End Learning of Negotiation Dialogues},
+  booktitle = {Proceedings of the 2017 Conference on Empirical Methods in Natural
+               Language Processing, {EMNLP} 2017, Copenhagen, Denmark, September
+               9-11, 2017},
+  pages     = {2443--2453},
+  year      = {2017},
+  crossref  = {DBLP:conf/emnlp/2017},
+  url       = {https://aclanthology.info/papers/D17-1259/d17-1259},
+  timestamp = {Tue, 30 Jan 2018 13:42:04 +0100},
+  biburl    = {https://dblp.org/rec/bib/conf/emnlp/LewisYDPB17},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
 }
 ```
 
