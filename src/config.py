@@ -40,3 +40,18 @@ cuda = False # use CUDA
 plot_graphs = False # use visdom
 domain = "object_division" # domain for the dialogue
 rnn_ctx_encoder = False # Whether to use RNN for encoding the context
+
+#fixes
+rl_gamma = 0.95
+rl_eps = 0.0
+rl_momentum = 0.0
+rl_lr = 20.0 
+rl_clip = 0.2
+rl_reinforcement_lr = 20.0
+rl_reinforcement_clip = 0.2
+rl_bsz = 25
+rl_sv_train_freq = 4
+rl_nepoch = 4
+rl_score_threshold= 6
+verbose = True
+rl_temperature = 0.1
