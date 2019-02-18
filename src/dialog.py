@@ -3,12 +3,10 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-"""
-Dialogue runner class. Implementes communication between two Agents.
-"""
+
 import sys
 import pdb
-import logging
+
 import numpy as np
 
 from metric import MetricsContainer
@@ -16,10 +14,8 @@ import data
 import utils
 import domain
 
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(filename)s : %(message)s', level=logging.INFO)
 
 class DialogLogger(object):
-    """Logger for a dialogue."""
     CODE2ITEM = [
         ('item0', 'book'),
         ('item1', 'hat'),
@@ -79,7 +75,6 @@ class DialogLogger(object):
 
 
 class DialogSelfTrainLogger(DialogLogger):
-    """This logger is used to produce new training data from selfplaying."""
     def __init__(self, verbose=False, log_file=None):
         super(DialogSelfTrainLogger, self).__init__(verbose, log_file)
         self.name2example = {}
@@ -114,9 +109,8 @@ class DialogSelfTrainLogger(DialogLogger):
 
 
 class Dialog(object):
-    """Dialogue runner."""
     def __init__(self, agents, args):
-        # for now we only suppport dialog of 2 agents
+        # For now we only suppport dialog of 2 agents
         assert len(agents) == 2
         self.agents = agents
         self.args = args
@@ -125,92 +119,112 @@ class Dialog(object):
         self._register_metrics()
 
     def _register_metrics(self):
-        """Registers valuable metrics."""
         self.metrics.register_average('dialog_len')
         self.metrics.register_average('sent_len')
         self.metrics.register_percentage('agree')
+        self.metrics.register_moving_percentage('moving_agree')
         self.metrics.register_average('advantage')
+        self.metrics.register_moving_average('moving_advantage')
         self.metrics.register_time('time')
         self.metrics.register_average('comb_rew')
+        self.metrics.register_average('agree_comb_rew')
         for agent in self.agents:
             self.metrics.register_average('%s_rew' % agent.name)
+            self.metrics.register_moving_average('%s_moving_rew' % agent.name)
+            self.metrics.register_average('agree_%s_rew' % agent.name)
             self.metrics.register_percentage('%s_sel' % agent.name)
             self.metrics.register_uniqueness('%s_unique' % agent.name)
         # text metrics
-        ref_text = ' '.join(data.read_lines(self.args.ref_text))
-        self.metrics.register_ngram('full_match', text=ref_text)
+        if self.args.ref_text:
+            ref_text = ' '.join(data.read_lines(self.args.ref_text))
+            self.metrics.register_ngram('full_match', text=ref_text)
 
     def _is_selection(self, out):
-        return len(out) == 1 and out[0] == '<selection>'
+        return len(out) == 1 and (out[0] in ['<selection>', '<no_agreement>'])
 
     def show_metrics(self):
         return ' '.join(['%s=%s' % (k, v) for k, v in self.metrics.dict().items()])
 
-    def run(self, ctxs, logger):
-        """Runs one instance of the dialogue."""
+    def run(self, ctxs, logger, max_words=5000):
         assert len(self.agents) == len(ctxs)
-        # initialize agents by feeding in the contexes
-        for agent, ctx in zip(self.agents, ctxs):
+        for agent, ctx, partner_ctx in zip(self.agents, ctxs, reversed(ctxs)):
             agent.feed_context(ctx)
+            agent.feed_partner_context(partner_ctx)
             logger.dump_ctx(agent.name, ctx)
         logger.dump('-' * 80)
 
-        # choose who goes first by random
+        # Choose who goes first by random
         if np.random.rand() < 0.5:
             writer, reader = self.agents
         else:
             reader, writer = self.agents
 
         conv = []
-        # reset metrics
         self.metrics.reset()
 
+        #words_left = np.random.randint(50, 200)
+        words_left = max_words
+        length = 0
+        expired = False
+
         while True:
-            # produce an utterance
-            out = writer.write()
+            out = writer.write(max_words=words_left)
+            words_left -= len(out)
+            length += len(out)
 
             self.metrics.record('sent_len', len(out))
-            self.metrics.record('full_match', out)
+            if 'full_match' in self.metrics.metrics:
+                self.metrics.record('full_match', out)
             self.metrics.record('%s_unique' % writer.name, out)
 
-            # append the utterance to the conversation
             conv.append(out)
-            # make the other agent to read it
             reader.read(out)
             if not writer.human:
                 logger.dump_sent(writer.name, out)
-            # check if the end of the conversation was generated
+
             if self._is_selection(out):
                 self.metrics.record('%s_sel' % writer.name, 1)
                 self.metrics.record('%s_sel' % reader.name, 0)
                 break
+
+            if words_left <= 1:
+                break
+
             writer, reader = reader, writer
 
+
         choices = []
-        # generate choices for each of the agents
         for agent in self.agents:
             choice = agent.choose()
             choices.append(choice)
             logger.dump_choice(agent.name, choice[: self.domain.selection_length() // 2])
 
-        # evaluate the choices, produce agreement and a reward
         agree, rewards = self.domain.score_choices(choices, ctxs)
+        if expired:
+            agree = False
         logger.dump('-' * 80)
         logger.dump_agreement(agree)
-        # perform update, in case if any of the agents is learnable
-        for agent, reward in zip(self.agents, rewards):
+        for i, (agent, reward) in enumerate(zip(self.agents, rewards)):
             logger.dump_reward(agent.name, agree, reward)
-            logging.debug("%s : %s : %s" % (str(agent.name), str(agree), str(rewards)))
-            agent.update(agree, reward)
+            j = 1 if i == 0 else 0
+            agent.update(agree, reward, choice=choices[i],
+                partner_choice=choices[j], partner_input=ctxs[j], max_partner_reward=rewards[j])
 
         if agree:
             self.metrics.record('advantage', rewards[0] - rewards[1])
+            self.metrics.record('moving_advantage', rewards[0] - rewards[1])
+            self.metrics.record('agree_comb_rew', np.sum(rewards))
+            for agent, reward in zip(self.agents, rewards):
+                self.metrics.record('agree_%s_rew' % agent.name, reward)
+
         self.metrics.record('time')
         self.metrics.record('dialog_len', len(conv))
         self.metrics.record('agree', int(agree))
+        self.metrics.record('moving_agree', int(agree))
         self.metrics.record('comb_rew', np.sum(rewards) if agree else 0)
         for agent, reward in zip(self.agents, rewards):
             self.metrics.record('%s_rew' % agent.name, reward if agree else 0)
+            self.metrics.record('%s_moving_rew' % agent.name, reward if agree else 0)
 
         logger.dump('-' * 80)
         logger.dump(self.show_metrics())

@@ -3,34 +3,29 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-"""
-Reinforcement learning via Policy Gradient (REINFORCE).
-"""
 
 import argparse
 import pdb
 import random
 import re
 import time
-import logging
+
 import numpy as np
 import torch
 from torch import optim
 from torch import autograd
 import torch.nn as nn
 
-import config
 import data
 import utils
-from engine import Engine
 from utils import ContextGenerator
-from agent import LstmAgent, LstmRolloutAgent, RlAgent
+from agent import RnnAgent, RnnRolloutAgent, RlAgent, HierarchicalAgent
 from dialog import Dialog, DialogLogger
+from selfplay import get_agent_type
+from domain import get_domain
 
-logging.basicConfig(format=config.log_format, level=config.log_level)
 
 class Reinforce(object):
-    """Facilitates a dialogue between two agents and constantly updates them."""
     def __init__(self, dialog, ctx_gen, args, engine, corpus, logger=None):
         self.dialog = dialog
         self.ctx_gen = ctx_gen
@@ -40,28 +35,24 @@ class Reinforce(object):
         self.logger = logger if logger else DialogLogger()
 
     def run(self):
-        """Entry point of the training."""
-        validset, validset_stats = self.corpus.valid_dataset(self.args.bsz,
-            device_id=self.engine.device_id)
-        trainset, trainset_stats = self.corpus.train_dataset(self.args.bsz,
-            device_id=self.engine.device_id)
-        N = len(self.corpus.word_dict)
+        validset, validset_stats = self.corpus.valid_dataset(self.args.bsz)
+        trainset, trainset_stats = self.corpus.train_dataset(self.args.bsz)
 
         n = 0
         for ctxs in self.ctx_gen.iter(self.args.nepoch):
             n += 1
-            # supervised update
             if self.args.sv_train_freq > 0 and n % self.args.sv_train_freq == 0:
-                self.engine.train_single(N, trainset)
+                batch = random.choice(trainset)
+                self.engine.model.train()
+                self.engine.train_batch(batch)
+                self.engine.model.eval()
 
             self.logger.dump('=' * 80)
-            # run dialogue, it is responsible for reinforcing the agents
             self.dialog.run(ctxs, self.logger)
             self.logger.dump('=' * 80)
             self.logger.dump('')
             if n % 100 == 0:
                 self.logger.dump('%d: %s' % (n, self.dialog.show_metrics()), forced=True)
-                logging.info('%d: %s' % (n, self.dialog.show_metrics()))
 
         def dump_stats(dataset, stats, name):
             loss, select_loss = self.engine.valid_pass(N, dataset, stats)
@@ -80,10 +71,6 @@ class Reinforce(object):
 
 def main():
     parser = argparse.ArgumentParser(description='Reinforce')
-    parser.add_argument('--data', type=str, default=config.data_dir,
-        help='location of the data corpus')
-    parser.add_argument('--unk_threshold', type=int, default=config.unk_threshold,
-        help='minimum word frequency to be in dictionary')
     parser.add_argument('--alice_model_file', type=str,
         help='Alice model file')
     parser.add_argument('--bob_model_file', type=str,
@@ -92,84 +79,89 @@ def main():
         help='output model file')
     parser.add_argument('--context_file', type=str,
         help='context file')
-    parser.add_argument('--temperature', type=float, default=config.rl_temperature,
+    parser.add_argument('--temperature', type=float, default=1.0,
         help='temperature')
-    parser.add_argument('--cuda', action='store_true', default=config.cuda,
+    parser.add_argument('--pred_temperature', type=float, default=1.0,
+        help='temperature')
+    parser.add_argument('--cuda', action='store_true', default=False,
         help='use CUDA')
-    parser.add_argument('--verbose', action='store_true', default=config.verbose,
+    parser.add_argument('--verbose', action='store_true', default=False,
         help='print out converations')
-    parser.add_argument('--seed', type=int, default=config.seed,
+    parser.add_argument('--seed', type=int, default=1,
         help='random seed')
-    parser.add_argument('--score_threshold', type=int, default=config.rl_score_threshold,
+    parser.add_argument('--score_threshold', type=int, default=6,
         help='successful dialog should have more than score_threshold in score')
     parser.add_argument('--log_file', type=str, default='',
         help='log successful dialogs to file for training')
     parser.add_argument('--smart_bob', action='store_true', default=False,
         help='make Bob smart again')
-    parser.add_argument('--gamma', type=float, default=config.rl_gamma,
+    parser.add_argument('--gamma', type=float, default=0.99,
         help='discount factor')
-    parser.add_argument('--eps', type=float, default=config.rl_eps,
+    parser.add_argument('--eps', type=float, default=0.5,
         help='eps greedy')
-    parser.add_argument('--nesterov', action='store_true', default=config.nesterov,
-        help='enable nesterov momentum')
-    parser.add_argument('--momentum', type=float, default=config.rl_momentum,
+    parser.add_argument('--momentum', type=float, default=0.1,
         help='momentum for sgd')
-    parser.add_argument('--lr', type=float, default=config.rl_lr,
+    parser.add_argument('--lr', type=float, default=0.1,
         help='learning rate')
-    parser.add_argument('--clip', type=float, default=config.rl_clip,
+    parser.add_argument('--clip', type=float, default=0.1,
         help='gradient clip')
-    parser.add_argument('--rl_lr', type=float, default=config.rl_reinforcement_lr,
+    parser.add_argument('--rl_lr', type=float, default=0.002,
         help='RL learning rate')
-    parser.add_argument('--rl_clip', type=float, default=config.rl_reinforcement_clip,
+    parser.add_argument('--rl_clip', type=float, default=2.0,
         help='RL gradient clip')
     parser.add_argument('--ref_text', type=str,
         help='file with the reference text')
-    parser.add_argument('--bsz', type=int, default=config.rl_bsz,
-        help='batch size')
-    parser.add_argument('--sv_train_freq', type=int, default=config.rl_sv_train_freq,
+    parser.add_argument('--sv_train_freq', type=int, default=-1,
         help='supervision train frequency')
-    parser.add_argument('--nepoch', type=int, default=config.rl_nepoch,
+    parser.add_argument('--nepoch', type=int, default=1,
         help='number of epochs')
-    parser.add_argument('--visual', action='store_true', default=config.plot_graphs,
+    parser.add_argument('--hierarchical', action='store_true', default=False,
+        help='use hierarchical training')
+    parser.add_argument('--visual', action='store_true', default=False,
         help='plot graphs')
-    parser.add_argument('--domain', type=str, default=config.domain,
+    parser.add_argument('--domain', type=str, default='object_division',
         help='domain for the dialogue')
+    parser.add_argument('--selection_model_file', type=str,  default='',
+        help='path to save the final model')
+    parser.add_argument('--data', type=str, default='data/negotiate',
+        help='location of the data corpus')
+    parser.add_argument('--unk_threshold', type=int, default=20,
+        help='minimum word frequency to be in dictionary')
+    parser.add_argument('--bsz', type=int, default=16,
+        help='batch size')
+    parser.add_argument('--validate', action='store_true', default=False,
+        help='plot graphs')
+    parser.add_argument('--scratch', action='store_true', default=False,
+        help='erase prediciton weights')
+    parser.add_argument('--sep_sel', action='store_true', default=False,
+        help='use separate classifiers for selection')
+
     args = parser.parse_args()
 
-    device_id = utils.use_cuda(args.cuda)
-    logging.info("Starting training using pytorch version:%s" % (str(torch.__version__)))
-    logging.info("CUDA is %s" % ("enabled. Using device_id:"+str(device_id) + " version:" \
-        +str(torch.version.cuda) + " on gpu:" + torch.cuda.get_device_name(0) if args.cuda else "disabled"))
+    utils.use_cuda(args.cuda)
+    utils.set_seed(args.seed)
 
     alice_model = utils.load_model(args.alice_model_file)
-    # we don't want to use Dropout during RL
-    alice_model.eval()
-    # Alice is a RL based agent, meaning that she will be learning while selfplaying
-    logging.info("Creating RlAgent from alice_model: %s" % (args.alice_model_file))
-    alice = RlAgent(alice_model, args, name='Alice')
+    alice_ty = get_agent_type(alice_model)
+    alice = alice_ty(alice_model, args, name='Alice', train=True)
+    alice.vis = args.visual
 
-    # we keep Bob frozen, i.e. we don't update his parameters
-    logging.info("Creating Bob's (--smart_bob) LstmRolloutAgent" if args.smart_bob \
-        else "Creating Bob's (not --smart_bob) LstmAgent" )
-    bob_ty = LstmRolloutAgent if args.smart_bob else LstmAgent
     bob_model = utils.load_model(args.bob_model_file)
-    bob_model.eval()
-    bob = bob_ty(bob_model, args, name='Bob')
+    bob_ty = get_agent_type(bob_model)
+    bob = bob_ty(bob_model, args, name='Bob', train=False)
 
-    logging.info("Initializing communication dialogue between Alice and Bob")
     dialog = Dialog([alice, bob], args)
     logger = DialogLogger(verbose=args.verbose, log_file=args.log_file)
     ctx_gen = ContextGenerator(args.context_file)
 
-    logging.info("Building word corpus, requiring minimum word frequency of %d for dictionary" % (args.unk_threshold))
-    corpus = data.WordCorpus(args.data, freq_cutoff=args.unk_threshold)
-    engine = Engine(alice_model, args, device_id, verbose=False)
+    domain = get_domain(args.domain)
+    corpus = alice_model.corpus_ty(domain, args.data, freq_cutoff=args.unk_threshold,
+        verbose=True, sep_sel=args.sep_sel)
+    engine = alice_model.engine_ty(alice_model, args)
 
-    logging.info("Starting Reinforcement Learning")
     reinforce = Reinforce(dialog, ctx_gen, args, engine, corpus, logger)
     reinforce.run()
 
-    logging.info("Saving updated Alice model to %s" % (args.output_model_file))
     utils.save_model(alice.model, args.output_model_file)
 
 
