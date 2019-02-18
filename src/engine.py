@@ -27,7 +27,7 @@ import vis
 
 class Criterion(object):
     """Weighted CrossEntropyLoss."""
-    def __init__(self, dictionary, device_id=None, bad_toks=[], reduction='elementwise_mean'):
+    def __init__(self, dictionary, device_id=None, bad_toks=[], reduction='mean'):
         w = torch.Tensor(len(dictionary)).fill_(1)
         for tok in bad_toks:
             w[dictionary.get_idx(tok)] = 0.0
