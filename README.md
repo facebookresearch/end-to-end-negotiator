@@ -1,5 +1,9 @@
 # Introduction
-This is a [PyTorch](http://pytorch.org/) implementation of research paper [Deal or No Deal? End-to-End Learning for Negotiation Dialogues](https://arxiv.org/abs/1706.05125) developed by [Facebook AI Research](http://research.fb.com/category/facebook-ai-research-fair).
+This is a [PyTorch](http://pytorch.org/) implementation of the following research papers:
+ * [Deal or No Deal? End-to-End Learning for Negotiation Dialogues](https://arxiv.org/abs/1706.05125)
+ * [Hierarchical Text Generation and Planning for Strategic Dialogue](https://arxiv.org/abs/1712.05846)
+
+The code is developed by [Facebook AI Research](http://research.fb.com/category/facebook-ai-research-fair).
 
 The code trains neural networks to hold negotiations in natural language, and allows reinforcement learning self play and rollout-based planning.
 
