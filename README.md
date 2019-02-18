@@ -92,7 +92,7 @@ python train.py \
   --init_range 0.1 \
   --lr 0.0005 \
   --max_epoch 30 \
-  --min_lr 0.01 \
+  --min_lr 0.00005 \
   --momentum 0.1 \
   --nembed_ctx 64 \
   --nembed_word 256 \
