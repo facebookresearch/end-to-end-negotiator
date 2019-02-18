@@ -82,9 +82,9 @@ pip install visdom
 ```
 
 # Usage
-## Supervised training
+## Supervised Training
 
-### Action classifier
+### Action Classifier
 We use an action classifier to compare performance of various models. The action classifier is described in section 3 of (2). It can be trained by running the following command:
 ```
 python train.py \
@@ -113,7 +113,8 @@ python train.py \
 --sep_sel \
 --model_file selection_model.th
 ```
-### Baseline RNN model
+
+### Baseline RNN Model
 This is the baseline RNN model that we describe in (1):
 ```
 python train.py \
@@ -141,18 +142,115 @@ python train.py \
 --sep_sel \
 --model_file rnn_model.th
 ```
+
+### Hierarchical Latent Model
+In this section we provide guidelines on how to train the hierarchical latent model from (2). The final model requires two sub-models: the clustering model, which learns compact representations over intents; and the language model, which translates intent representations into language. Please read sections 5 and 6 of (2) for more details.
+
+**Clustering Model**
+```
+python train.py \
+--cuda \
+--bsz 16 \
+--clip 2.0 \
+--decay_every 1 \
+--decay_rate 5.0 \
+--domain object_division \
+--dropout 0.2 \
+--init_range 0.3 \
+--lr 0.001 \
+--max_epoch 15 \
+--min_lr 1e-05 \
+--model_type latent_clustering_model \
+--momentum 0.1 \
+--nembed_ctx 64 \
+--nembed_word 256 \
+--nhid_ctx 64 \
+--nhid_lang 256 \
+--nhid_sel 128 \
+--nhid_strat 256 \
+--unk_threshold 20 \
+--num_clusters 50 \
+--sep_sel \
+--skip_values \
+--nhid_cluster 256 \
+--selection_model_file selection_model.th \
+--model_file clustering_model.th
+```
+
+**Language Model**
+```
+python train.py \
+--cuda \
+--bsz 16 \
+--clip 2.0 \
+--decay_every 1 \
+--decay_rate 5.0 \
+--domain object_division \
+--dropout 0.1 \
+--init_range 0.2 \
+--lr 0.001 \
+--max_epoch 15 \
+--min_lr 1e-05 \
+--model_type latent_clustering_language_model \
+--momentum 0.1 \
+--nembed_ctx 64 \
+--nembed_word 256 \
+--nhid_ctx 64 \
+--nhid_lang 256 \
+--nhid_sel 128 \
+--nhid_strat 256 \
+--unk_threshold 20 \
+--num_clusters 50 \
+--sep_sel \
+--nhid_cluster 256 \
+--skip_values \
+--selection_model_file selection_model.th \
+--cluster_model_file clustering_model.th \
+--model_file clustering_language_model.th
+```
+
+**Full Model**
+```
+python train.py \
+--cuda \
+--bsz 16 \
+--clip 2.0 \
+--decay_every 1 \
+--decay_rate 5.0 \
+--domain object_division \
+--dropout 0.2 \
+--init_range 0.3 \
+--lr 0.001 \
+--max_epoch 10 \
+--min_lr 1e-05 \
+--model_type latent_clustering_prediction_model \
+--momentum 0.2 \
+--nembed_ctx 64 \
+--nembed_word 256 \
+--nhid_ctx 64 \
+--nhid_lang 256 \
+--nhid_sel 128 \
+--nhid_strat 256 \
+--unk_threshold 20 \
+--num_clusters 50 \
+--sep_sel \
+--selection_model_file selection_model.th \
+--lang_model_file clustering_language_model.th \
+--model_file full_model.th
+```
+
 ### Selfplay
-If you want to have two pretrained models to negotiate against each another, use `selfplay.py`. For example, lets have the reinforced model to play against the supervised model:
+If you want to have two pretrained models to negotiate against each another, use `selfplay.py`. For example, lets have two rnn models to play against each other:
 ```
 python selfplay.py \
-  --alice_model_file rl_model.th \
-  --bob_model_file sv_model.th \
-  --context_file data/negotiate/selfplay.txt \
-  --temperature 0.5 \
-  --log_file selfplay.log \
-  --ref_text data/negotiate/train.txt
+--cuda \
+--alice_model_file rnn_model.th \
+--bob_model_file rnn_model.th \
+--context_file data/negotiate/selfplay.txt  \
+--temperature 0.5 \
+--selection_model_file selection_model.th
 ```
-In the `selfplay.log` log file you will find the actual dialogues produced by the models, as well as some statistics. For example:
+The script will output generated dialogues, as well as some statistics. For example:
 ```
 ================================================================================
 Alice : book=(count:3 value:1) hat=(count:1 value:5) ball=(count:1 value:2)
