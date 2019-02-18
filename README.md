@@ -239,7 +239,7 @@ python train.py \
 --model_file full_model.th
 ```
 
-### Selfplay
+## Selfplay
 If you want to have two pretrained models to negotiate against each another, use `selfplay.py`. For example, lets have two rnn models to play against each other:
 ```
 python selfplay.py \
@@ -288,7 +288,7 @@ python selfplay.py \
   --log_file selfplay.log \
   --ref_text data/negotiate/train.txt
 ```
-### Chat
+## Chat
 You can also try yourself and negotiate with your model through a text based interface by using `chat.py`:
 ```
 python chat.py \
