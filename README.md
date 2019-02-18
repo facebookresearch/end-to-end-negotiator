@@ -90,9 +90,9 @@ python train.py \
   --decay_rate 5.0 \
   --dropout 0.5 \
   --init_range 0.1 \
-  --lr 1 \
+  --lr 0.0005 \
   --max_epoch 30 \
-  --min_lr 0.01 \
+  --min_lr 0.00005 \
   --momentum 0.1 \
   --nembed_ctx 64 \
   --nembed_word 256 \
@@ -116,7 +116,7 @@ python reinforce.py \
   --context_file data/negotiate/selfplay.txt \
   --eps 0.0 \
   --gamma 0.95 \
-  --lr 0.5 \
+  --lr 0.0001 \
   --momentum 0.1 \
   --nepoch 4 \
   --nesterov \
