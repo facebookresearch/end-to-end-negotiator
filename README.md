@@ -113,31 +113,33 @@ python train.py \
 --sep_sel \
 --model_file selection_model.th
 ```
-
-To refine a pre-trained supervised model with a goal-based incentive, one could use `reinforce.py` as follows:
+### Baseline RNN model
+This is the baseline RNN model that we describe in (1):
 ```
-python reinforce.py \
-  --data data/negotiate \
-  --cuda \
-  --bsz 16 \
-  --clip 1 \
-  --context_file data/negotiate/selfplay.txt \
-  --eps 0.0 \
-  --gamma 0.95 \
-  --lr 0.0001 \
-  --momentum 0.1 \
-  --nepoch 4 \
-  --nesterov \
-  --ref_text data/negotiate/train.txt \
-  --rl_clip 1 \
-  --rl_lr 0.2 \
-  --score_threshold 6 \
-  --sv_train_freq 4 \
-  --temperature 0.5 \
-  --alice_model sv_model.th \
-  --bob_model sv_model.th \
-  --output_model_file rl_model.th
-
+python train.py \
+--cuda \
+--bsz 16 \
+--clip 0.5 \
+--decay_every 1 \
+--decay_rate 5.0 \
+--domain object_division \
+--dropout 0.1 \
+--model_type rnn_model \
+--init_range 0.2 \
+--lr 0.001 \
+--max_epoch 30 \
+--min_lr 1e-07 \
+--momentum 0.1 \
+--nembed_ctx 64 \
+--nembed_word 256 \
+--nhid_attn 64 \
+--nhid_ctx 64 \
+--nhid_lang 128 \
+--nhid_sel 128 \
+--sel_weight 0.6 \
+--unk_threshold 20 \
+--sep_sel \
+--model_file rnn_model.th
 ```
 ### Selfplay
 If you want to have two pretrained models to negotiate against each another, use `selfplay.py`. For example, lets have the reinforced model to play against the supervised model:
