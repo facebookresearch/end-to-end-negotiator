@@ -1752,8 +1752,8 @@ class LatentClusteringAgent(HierarchicalAgent):
             choices_logits.append(torch.gather(sel_out[i], 0, idxs).unsqueeze(1))
 
         choice_logit = torch.sum(torch.cat(choices_logits, 1), 1, keepdim=True).squeeze(1)
-        choice_logit = choice_logit.sub(choice_logit.max(0)[0].data[0])
-        prob = F.softmax(choice_logit)
+        choice_logit = choice_logit.sub(choice_logit.max(0)[0].item())
+        prob = F.softmax(choice_logit, dim=0)
 
         if sample:
             idx = prob.multinomial().detach()
@@ -1762,10 +1762,10 @@ class LatentClusteringAgent(HierarchicalAgent):
             _, idx = prob.max(0, keepdim=True)
             logprob = None
 
-        p_agree = prob[idx.data[0]]
+        p_agree = prob[idx.item()]
 
         # Pick only your choice
-        return choices[idx.data[0]][:self.domain.selection_length()], logprob, p_agree.data[0]
+        return choices[idx.item()][:self.domain.selection_length()], logprob, p_agree.item()
 
 
 class LatentClusteringRolloutAgent(LatentClusteringAgent):

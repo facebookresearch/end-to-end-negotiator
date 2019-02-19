@@ -541,7 +541,7 @@ class LatentClusteringPredictionModel(nn.Module):
             z = q_z.multinomial().detach()
             log_q_z = q_z.log().gather(1, z)
         else:
-            _, z = q_z.max(1, keepdim=True)
+            _, z = q_z.max(1)
             log_q_z = None
 
         # select centroides
@@ -976,14 +976,14 @@ class LatentClusteringLanguageModel(nn.Module):
             out = self.unembed_sentence(lang_h.unsqueeze(0))
 
             scores = out.div(temperature)
-            scores = scores.sub(scores.max().data[0]).squeeze(0)
+            scores = scores.sub(scores.max().item()).squeeze(0)
 
             mask = Variable(self.special_token_mask)
             scores = scores.add(mask)
 
-            prob = F.softmax(scores)
-            logprob = F.log_softmax(scores)
-            inpt = prob.multinomial().detach()
+            prob = F.softmax(scores, dim=0)
+            logprob = F.log_softmax(scores, dim=0)
+            inpt = prob.multinomial(1).detach()
             outs.append(inpt.unsqueeze(0))
             logprob = logprob.gather(0, inpt)
             logprobs.append(logprob)
