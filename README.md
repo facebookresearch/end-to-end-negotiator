@@ -67,7 +67,7 @@ Each dialogue is converted into two training examples in the dataset, showing th
 ```
 
 # Setup
-All code was developed with Python 3.0 on CentOS Linux 7, and tested on Ubuntu 16.04. In addition, we used PyTorch 0.4.1, CUDA 9.0, and Visdom 0.1.8.4.
+All code was developed with Python 3.0 on CentOS Linux 7, and tested on Ubuntu 16.04. In addition, we used PyTorch 1.0.0, CUDA 9.0, and Visdom 0.1.8.4.
 
 We recommend to use [Anaconda](https://www.continuum.io/why-anaconda). In order to set up a working environment follow the steps below:
 ```
