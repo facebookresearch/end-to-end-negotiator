@@ -3,9 +3,6 @@
 #
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-"""
-An util to negotiate with AI.
-"""
 
 import argparse
 import itertools
@@ -13,19 +10,17 @@ import domain
 
 import utils
 from utils import ContextGenerator, ManualContextGenerator
-from agent import LstmAgent, HumanAgent, LstmRolloutAgent
+from agent import RnnAgent, HumanAgent, RnnRolloutAgent, HierarchicalAgent
 from dialog import Dialog, DialogLogger
 
 
 class Chat(object):
-    """A helper class that runs dialogues."""
     def __init__(self, dialog, ctx_gen, logger=None):
         self.dialog = dialog
         self.ctx_gen = ctx_gen
         self.logger = logger if logger else DialogLogger()
 
     def run(self):
-        """Runs endless number of dialogues."""
         self.logger.dump('Welcome to our Chatroulette!')
         for dialog_id in itertools.count():
             self.logger.dump('=' * 80)
@@ -63,13 +58,16 @@ def main():
         help='allow AI to start the dialog')
     parser.add_argument('--ref_text', type=str,
         help='file with the reference text')
+    parser.add_argument('--cuda', action='store_true', default=False,
+        help='use CUDA')
     args = parser.parse_args()
 
+    utils.use_cuda(args.cuda)
     utils.set_seed(args.seed)
 
     human = HumanAgent(domain.get_domain(args.domain))
 
-    alice_ty = LstmRolloutAgent if args.smart_ai else LstmAgent
+    alice_ty = RnnRolloutAgent if args.smart_ai else HierarchicalAgent
     ai = alice_ty(utils.load_model(args.model_file), args)
 
 
@@ -77,7 +75,6 @@ def main():
 
     dialog = Dialog(agents, args)
     logger = DialogLogger(verbose=True)
-    # either take manually produced contextes, or relay on the ones from the dataset
     if args.context_file == '':
         ctx_gen = ManualContextGenerator(args.num_types, args.num_objects, args.max_score)
     else:
