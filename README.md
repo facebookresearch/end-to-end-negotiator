@@ -1,7 +1,8 @@
 # Introduction
 This is a [PyTorch](http://pytorch.org/) implementation of the following research papers:
- * (1) [Deal or No Deal? End-to-End Learning for Negotiation Dialogues](https://arxiv.org/abs/1706.05125)
- * (2) [Hierarchical Text Generation and Planning for Strategic Dialogue](https://arxiv.org/abs/1712.05846)
+ * (1) [Hierarchical Text Generation and Planning for Strategic Dialogue](https://arxiv.org/abs/1712.05846)
+ * (2) [Deal or No Deal? End-to-End Learning for Negotiation Dialogues](https://arxiv.org/abs/1706.05125)
+
 
 The code is developed by [Facebook AI Research](http://research.fb.com/category/facebook-ai-research-fair).
 
@@ -24,25 +25,6 @@ If you want to use this code in your research, please cite:
   url       = {http://proceedings.mlr.press/v80/yarats18a.html},
   timestamp = {Fri, 13 Jul 2018 14:58:25 +0200},
   biburl    = {https://dblp.org/rec/bib/conf/icml/YaratsL18},
-  bibsource = {dblp computer science bibliography, https://dblp.org}
-}
-
-@inproceedings{DBLP:conf/emnlp/LewisYDPB17,
-  author    = {Mike Lewis and
-               Denis Yarats and
-               Yann Dauphin and
-               Devi Parikh and
-               Dhruv Batra},
-  title     = {Deal or No Deal? End-to-End Learning of Negotiation Dialogues},
-  booktitle = {Proceedings of the 2017 Conference on Empirical Methods in Natural
-               Language Processing, {EMNLP} 2017, Copenhagen, Denmark, September
-               9-11, 2017},
-  pages     = {2443--2453},
-  year      = {2017},
-  crossref  = {DBLP:conf/emnlp/2017},
-  url       = {https://aclanthology.info/papers/D17-1259/d17-1259},
-  timestamp = {Tue, 30 Jan 2018 13:42:04 +0100},
-  biburl    = {https://dblp.org/rec/bib/conf/emnlp/LewisYDPB17},
   bibsource = {dblp computer science bibliography, https://dblp.org}
 }
 ```
