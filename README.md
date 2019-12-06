@@ -259,7 +259,7 @@ debug: 3 1 1 1 1 6 item0=3 item1=0 item2=0
 ================================================================================
 ```
 
-## Reinfrocement Learning
+## Reinforcement Learning
 To fine-tune a pretrained model with RL use the `reinforce.py` script:
 ```
 python reinforce.py \
